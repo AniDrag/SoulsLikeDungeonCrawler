@@ -1,0 +1,119 @@
+{
+    "version": 1,
+    "name": "Inputs_AniDrag",
+    "maps": [
+        {
+            "name": "PlayerMovement",
+            "id": "35b90055-4822-49d1-a5f2-a335dd7bc19f",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "7dcf4260-a465-4f91-9888-af40e2efc08e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "87fdbeaa-a6e3-4960-97b1-85a67b7d12cd",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "PlayerCamera",
+            "id": "bde5874d-54d4-4a87-a355-8ec137c029be",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "b001d07f-c7ce-4ce2-958a-8b4e12fb42d5",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "3edf8198-04b2-488c-af22-092eb91fafd6",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Inventory",
+            "id": "877bee8e-2283-4e06-8a89-50aff26f2c94",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "342c6bc2-6a96-4ef3-9dc5-ff367d1917dc",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "61c2eb10-1980-4eed-9598-6bac6ce47c44",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Menu",
+            "id": "11898a5f-7d64-444f-bd51-30faca3319db",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "748ac14a-41b2-4c40-879b-1c24440d2a65",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "3940c892-5013-432e-b2d6-19ba3eba7aeb",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

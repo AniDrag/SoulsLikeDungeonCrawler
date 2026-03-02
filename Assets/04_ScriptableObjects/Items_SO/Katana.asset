@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e5cd2c6c7f338c42bd707846b6c933e, type: 3}
+  m_Name: Katana
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentItem
+  IDitem: Katana
+  itemName: Katana
+  itemType: 1
+  rarity: 1
+  description: 
+  icon: {fileID: 0}
+  worldPrefab: {fileID: 6038940004187006333, guid: d28aa6bf83910424ebfa5ea06c226552, type: 3}
+  isStackable: 0
+  maxStack: 1
+  isUnique: 0
+  baseValue: 200
+  weight: 1.1
+  isNegative: 0
+  effect: 0
+  effectValue: 0
+  effectTime: 0
+  baseDamage: 15
+  stats:
+    VIT: 2
+    STR: 3
+    DEX: 4
+    INT: 3
+  equipmentType: 6
