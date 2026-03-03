@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.UI;
-[RequireComponent(typeof(AudioSource))]
+
 public class ButtonBehaviour : MonoBehaviour
 {
     public enum ButtonActivationResult
@@ -57,10 +57,6 @@ public class ButtonBehaviour : MonoBehaviour
                 Debug.LogWarning($"No Button component found on {transform.name}!!!");
                 return;
             }
-            else
-            {
-                Debug.LogWarning($"Button component found");
-            }
             
         }
     }
@@ -101,14 +97,14 @@ public class ButtonBehaviour : MonoBehaviour
             _audioSource = GetComponent<AudioSource>();
 
             if (_audioSource == null) { Debug.LogError("!! No audio Source component detected !!"); return; }
-            else { Debug.Log("Audio component Found"); }
+           
         }
-        else if (_audioSource.clip == null) _audioSource.clip = audioClip;
+        else if (_audioSource.clip == null && audioClip != null) _audioSource.clip = audioClip;
 
         if (target != null) { target.SetActive(false); }
 
-        _audioSource.Stop();
-        _audioSource.Play();
+        _audioSource?.Stop();
+        _audioSource?.Play();
         //enable and trigger sound
     }
     /// <summary>
