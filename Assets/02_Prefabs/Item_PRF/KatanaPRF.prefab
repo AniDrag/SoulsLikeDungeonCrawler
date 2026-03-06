@@ -257,7 +257,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7346759629724715696}
-  - component: {fileID: 1611272461935031149}
   m_Layer: 0
   m_Name: KatanaPRF
   m_TagString: Untagged
@@ -281,22 +280,6 @@ Transform:
   - {fileID: 5620376536254106083}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1611272461935031149
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6038940004187006333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44e595ea92b95fd4fb5d2ef29454dd29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OneHandedSword
-  comboWindowDuration: 0.5
-  lightRecoveryTime: 0.2
-  heavyRecoveryTime: 0.8
-  maxComboSteps: 2
 --- !u!1 &6690763920337579027
 GameObject:
   m_ObjectHideFlags: 0
