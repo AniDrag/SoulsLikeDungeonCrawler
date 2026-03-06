@@ -61,11 +61,12 @@ namespace AniDrag.CharacterComponents
         // Actions ----------------------------------------------------------------------------------------------------------
         // ------------------------------------------------------------------------------------------------------------------
         public Action<HealthComponent> onHealthChanged;
+        public Action DeathEvent { get; set; }
 
 
-     
 
-        
+
+
         public void InitializeHealthComponent(int vit, int level)
         {
             maxHealth = 100 + vit * (25 + level);
@@ -135,18 +136,27 @@ namespace AniDrag.CharacterComponents
                 StopCoroutine(regenRoutine);
                 isRegenerating = false;
             }
-
-            currentHealth = Mathf.Max(currentHealth - DamageCalculation(amount), 0);
+            int finalDamage = DamageCalculation(amount);
+            currentHealth = Mathf.Max(currentHealth - finalDamage, 0);
 
             if (currentHealth <= 0)
+            {
+                DeathEvent?.Invoke();
                 onDeath?.Invoke();
+            }
 
             onHealthChanged?.Invoke(this);
 
             // Restart regen monitoring
             TryStartRegen();
+#if UNITY_EDITOR
+            Debug.Log(
+                $"Character/Object: {this.gameObject.name} took {finalDamage} damage.\n"+
+                $"Health now: {currentHealth}, Shield: {currentShield}"
+            );
+#endif
         }
-        
+
         public void UpdateHealth(int vit, int level)
         {
             maxHealth = 100 + vit * (25 + level);
@@ -228,22 +238,17 @@ namespace AniDrag.CharacterComponents
             amount = Mathf.Max(amount - defense, 0);
 
             // 2. Shield absorbs damage first
-            if (USE_SHILD)
+            if (USE_SHILD && amount > 0)
             {
                 int shieldDamage = Mathf.Min(currentShield, amount);
                 currentShield -= shieldDamage;
-                amount =- shieldDamage;
+                amount -= shieldDamage;
             }
 
             // 3. Remaining goes to health
-            int finalDamage = amount ;
+            int finalDamage = amount > 0? amount : 0;
 
-#if UNITY_EDITOR
-            Debug.Log(
-                $"Character/Object: {this.gameObject.name} took {finalDamage} damage.\n" +
-                $"Shield now: {currentShield}"
-            );
-#endif
+
 
             return finalDamage;
         }

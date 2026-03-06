@@ -5,8 +5,16 @@ using AniDrag.Utility;
 
 namespace AniDrag.WeaponPack
 {
+    // Ok Input attack -> AttackInputPressed. until end of hit that is true then its set to false. if that is true attack rturns
     public class MeleeWeapon : WeaponCore
     {
+        [Header("anim strings")]
+        [SerializeField] private string attack = "Attack";
+        [SerializeField] private string combo = "ComboStep";
+        [SerializeField] private string altAttack = "AltAttack";
+        [SerializeField] private string holster = "HolsterAction"; 
+        [SerializeField] private string enableAttack = "CanAttack";
+
         [Header("Combo Settings")]
         [SerializeField] private float comboWindowDuration = 0.5f;
         [SerializeField] private float lightRecoveryTime = 0.2f;
@@ -39,6 +47,11 @@ namespace AniDrag.WeaponPack
         private bool isAttacking = false;
         private bool comboAvailable = false;
 
+        //Buffer for input during recovery or combo windows, can be expanded for more complex input handling
+        private bool bufferedAttackInput = false;
+        //private bool bufferedAltAttackInput = false;
+        private bool bufferedHolsterInput= false;
+
         private struct HitInfo
         {
             public Vector3 position;
@@ -53,28 +66,47 @@ namespace AniDrag.WeaponPack
         }
         private void Update()
         {
-            // If swing is active, check for hits every frame
+            // Count down recovery time
+            if (recoveryEndTime > 0)
+                recoveryEndTime -= Time.deltaTime;
+
+            // Hit detection while swing active
             if (isSwingActive)
-            {
                 PerformHitDetection();
-            }
         }
 
-        public override void Attack()
+        #region WeaponCore Main Functions
+        public override void Attack(bool isPressed = true)
         {
-            if (Time.time < recoveryEndTime) return;
-
+            if (Time.time < recoveryEndTime || bufferedAttackInput) return;
+            bufferedAttackInput = true;
             if (isAttacking && comboAvailable)
                 ContinueCombo();
             else if (!isAttacking)
                 StartNewCombo();
+            //Debug.Log($"Attack called. IsAttacking: {isAttacking}, ComboAvailable: {comboAvailable}, CurrentComboStep: {currentComboStep}");    
+        }
+        public override void Equip()
+        {
+            if (bufferedHolsterInput) return;
+            base.Equip();
+            anim.SetBool(holster, true);
+        }
+        public override void Unequip()
+        {
+            base.Unequip();
+            anim.SetBool(enableAttack, false);
+            anim.SetTrigger(holster);
         }
 
         private void StartNewCombo()
         {
             isAttacking = true;
+            comboAvailable = true; // will be refined by events
             currentComboStep = 0;
-            PlayAttackAnimation(currentComboStep);
+            anim.SetInteger(combo, currentComboStep);
+            anim.SetBool(enableAttack, true);   // allow transition
+            anim.SetTrigger(attack);
         }
 
         private void ContinueCombo()
@@ -83,31 +115,16 @@ namespace AniDrag.WeaponPack
 
             currentComboStep++;
             if (currentComboStep >= maxChainAttacks)
-                currentComboStep = 0;
+                currentComboStep = 0; // or loop to first
 
-            PlayAttackAnimation(currentComboStep);
+            anim.SetInteger(combo, currentComboStep);
+            anim.SetBool(enableAttack, true);   // ensure it's true for the next attack
+            anim.SetTrigger(attack);
+
+            // Combo window is now closed until the next hit end
+            comboAvailable = false;
+            comboWindowEndTime = 0; // cancel timer if any
         }
-
-        private void PlayAttackAnimation(int step)
-        {
-            anim.SetTrigger("Attack" + (step + 1));
-        }
-
-        // --- Animation Event Methods ---
-        // Called by animation event when the swing begins
-        public void OnSwingStart()
-        {
-            isSwingActive = true;
-            hitDuringSwing.Clear(); // new swing, new enemies
-        }
-
-        // Called by animation event when the swing ends
-        public void OnSwingEnd()
-        {
-            isSwingActive = false;
-            // Optionally trigger combo window, recovery, etc.
-        }
-
         private void PerformHitDetection()
         {
             if (hitPoints == null || hitPoints.Length == 0) return;
@@ -140,26 +157,55 @@ namespace AniDrag.WeaponPack
                 }
             }
         }
+        #endregion
 
-        public void OnComboWindowOpen()
+        #region Animations Events
+        // --- Animation Event Methods ---
+        // Called by animation event when the swing begins
+        public void AnimEv_OnSwingStart()
         {
+            anim.SetBool(enableAttack, true);
             comboAvailable = true;
-            comboWindowEndTime = Time.time + comboWindowDuration;
+            //Debug.Log($"AnimEv_OnSwingStart: CanAttack = {anim.GetBool(enableAttack)}");
         }
 
-        public void OnComboWindowClose()
+        // Called by animation event when the swing ends
+        public void AnimEv_OnSwingEnd()
         {
+            anim.SetBool(enableAttack, false);
             comboAvailable = false;
-        }
-
-        public void OnAttackFinished()
-        {
             isAttacking = false;
-            comboAvailable = false;
+            bufferedAttackInput = false;
 
             float recovery = (currentComboStep == maxChainAttacks - 1) ? heavyRecoveryTime : lightRecoveryTime;
             recoveryEndTime = Time.time + recovery;
+            //Debug.Log($"AnimEv_OnSwingEnd: CanAttack = {anim.GetBool(enableAttack)}");
         }
+        public void AnimEv_OnHolsterStart()
+        {
+           
+        }
+
+        // Called by animation event when the swing ends
+        public void AnimEv_OnHolsterEnd()
+        {
+            
+        }
+        public void AnimEv_OnHitStart()
+        {
+            isSwingActive = true;
+            hitDuringSwing.Clear(); // new swing, new enemies
+        }
+
+        // Called by animation event when the swing ends
+        public void AnimEv_OnHitEnd()
+        {
+            isSwingActive = false;
+            bufferedAttackInput = false;
+            // Optionally trigger combo window, recovery, etc.
+        }
+        #endregion
+
 
         private void OnDrawGizmos()
         {
@@ -186,8 +232,10 @@ namespace AniDrag.WeaponPack
                 Gizmos.DrawSphere(hit.position, 0.1f);
             }
         }
+
+
         [Button("Test Hit")]
-        void TestHit()
+        public void AnimEv_Hit()
         {
             isSwingActive = !isSwingActive;
             if (isSwingActive)

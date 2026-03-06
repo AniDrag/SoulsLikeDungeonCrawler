@@ -38,10 +38,24 @@ namespace AniDrag.WeaponPack
             - Using weapon functions aka virtual voids.
           */
         public WeaponInputType inputType;
-        public abstract void Attack();          // called by controller on input
-        public virtual void AltAttack() { }       // optional
-        public virtual void Equip() { }
-        public virtual void Unequip() { }
+        public Animator weponAnimator;
+
+        #region Mele weapon virtual functions
+        public virtual void Attack(bool isPressed = true) { }
+        public virtual void AltAttack(bool isPressed = true) { }       
+        public virtual void Block(bool isPressed = true) { }
+
+        #endregion
+
+        #region Ranged weapon virtual functions 
+        public virtual void Fire(bool isPressed = true) { }
+        public virtual void AltFire(bool isPressed = true) { }
+        public virtual void Aim(bool isPressed = true) { }
+        public virtual void Reload(bool isPressed = true) { }
+
+        #endregion
+        public virtual void Equip() { Debug.Log("I was equipped"); }
+        public virtual void Unequip() { Debug.Log("I was UN equipped"); }
 
     }
 }

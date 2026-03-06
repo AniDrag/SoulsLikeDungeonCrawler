@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace AniDrag.Core
@@ -15,7 +16,9 @@ namespace AniDrag.Core
     /// </summary>
     public interface IDamagable
     {
-        void TakeDamage(int amount);
+        public void TakeDamage(int amount);
+
+        public Action DeathEvent { get; set; }
     }
 
     /// <summary>
