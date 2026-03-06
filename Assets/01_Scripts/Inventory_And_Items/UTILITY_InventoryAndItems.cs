@@ -30,6 +30,21 @@ namespace AniDrag.InventoryAndItems
         }
     }
 
+    [System.Serializable]
+    public class DroppableItem
+    {
+        public Item item { get; private set; }
+        public int min { get; private set; }
+        public int max { get; private set; }
+
+        public DroppableItem(Item pItem, int pMin, int pMax)
+        {
+            item = pItem;
+            min = pMin;
+            max = pMax;
+        }
+    }
+
 
     #endregion
 }
