@@ -70,5 +70,6 @@ namespace AniDrag.Core
 
     }
 
+
     #endregion
 }

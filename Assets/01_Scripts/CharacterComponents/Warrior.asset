@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 254ec48d2d8e33344ba1fe3f26fb5e03, type: 3}
+  m_Name: Warrior
+  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.CharacterComponents.CharacterClass
+  <className>k__BackingField: Warrior
+  <baseStats>k__BackingField:
+    VIT: 10
+    STR: 13
+    DEX: 8
+    INT: 7
+  <growthFactors>k__BackingField:
+    VIT: 3
+    STR: 4
+    DEX: 2
+    INT: 1

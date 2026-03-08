@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 8adb9ac9e55cecc46a1ae68afa3e0a57
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - playerCam: {instanceID: 0}
+  - inputs: {instanceID: 0}
+  - settings: {fileID: 11400000, guid: b6cf7044597f12f4b98568d6dadc887b, type: 2}
+  - playerOrientation: {instanceID: 0}
+  - camTrackPosition: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

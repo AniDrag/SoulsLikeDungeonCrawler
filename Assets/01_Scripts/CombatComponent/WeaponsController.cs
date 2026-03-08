@@ -183,6 +183,20 @@ namespace AniDrag.WeaponPack
             {
                 currentWeapon.AltFire();
             }
+
+            if (inputs.actions[reload].triggered)
+            {
+                currentWeapon.Reload();
+
+            }
+            if (inputs.actions[aim].IsPressed())
+            {
+                currentWeapon.Aim(true);
+            }
+            else if (inputs.actions[aim].WasReleasedThisFrame())
+            {
+                currentWeapon.Aim(false);
+            }
         }
 
 
