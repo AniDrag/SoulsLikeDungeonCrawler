@@ -133,6 +133,7 @@ namespace AniDrag.CharacterComponents
         }
         public void TakeDamage(int amount, GameObject owner = null)
         {
+            if(IsDead) return; 
             // Stop regen timer
             lastDamageTime = Time.time;
 

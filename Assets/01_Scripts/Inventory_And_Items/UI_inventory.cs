@@ -1,3 +1,4 @@
+using AniDrag.Core;
 using UnityEngine;
 namespace AniDrag.InventoryAndItems
 {
@@ -9,6 +10,7 @@ namespace AniDrag.InventoryAndItems
         [SerializeField] private InventoryController controller;
         [SerializeField] private GameObject itemUIPrefab;
         [SerializeField] private Transform contentParent; // e.g., scroll view content
+        [SerializeField] private Transform inventoryPanel;
 
         private void OnEnable()
         {
@@ -16,6 +18,7 @@ namespace AniDrag.InventoryAndItems
             {
                 controller.OnInventoryChanged.AddListener(RefreshUI);
                 RefreshUI();
+                controller.EnableDisableInventory += ToggleInventoryPanel;
             }
         }
 
@@ -37,6 +40,21 @@ namespace AniDrag.InventoryAndItems
                 GameObject go = Instantiate(itemUIPrefab, contentParent);
                 ItemUI itemUI = go.GetComponent<ItemUI>();
                 itemUI.Setup(stack, controller);
+            }
+        }
+        void ToggleInventoryPanel()
+        {
+            if (inventoryPanel != null)
+            {
+                if (inventoryPanel.gameObject.activeSelf) {
+                    inventoryPanel.gameObject.SetActive(false);
+                    GameManager.Instance.cameraSettings.DisableMenuPanel();
+                }
+                else { 
+                    inventoryPanel.gameObject.SetActive(true);
+                    GameManager.Instance.cameraSettings.EnableMenuPanel();
+                }
+
             }
         }
     }

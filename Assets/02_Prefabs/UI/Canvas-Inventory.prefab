@@ -183,7 +183,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8735077293194576698
 RectTransform:
   m_ObjectHideFlags: 0
@@ -254,7 +254,6 @@ GameObject:
   - component: {fileID: 368823601653841227}
   - component: {fileID: 9054029221785185693}
   - component: {fileID: 3022500165111616178}
-  - component: {fileID: 1713667551790598183}
   - component: {fileID: 6195466634875060461}
   m_Layer: 5
   m_Name: Canvas-Inventory
@@ -346,38 +345,6 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &1713667551790598183
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 670409192714643211}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0a62a46b494ea840adcb9b54ca11c47, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.InventoryAndItems.ManagerEquipment
-  startingEquipment: []
-  OnEquipmentChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  ReturnEquipmentToInventory:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: AniDrag.InventoryAndItems.InventoryManager, Assembly-CSharp
-        m_MethodName: ReciveUnequippedItem
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  Debug_Equipment: {fileID: 0}
 --- !u!114 &6195466634875060461
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,6 +360,7 @@ MonoBehaviour:
   controller: {fileID: 0}
   itemUIPrefab: {fileID: 2784467971445671584, guid: d02fb6e2cf32e9942b0eaa3d8f2b38ad, type: 3}
   contentParent: {fileID: 5019585634010538909}
+  inventoryPanel: {fileID: 2976095944285931995}
 --- !u!1 &2869206699873810771
 GameObject:
   m_ObjectHideFlags: 0
@@ -429,7 +397,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 70}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2802674538000502922
 MonoBehaviour:
@@ -511,7 +479,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1087595680624261469
 RectTransform:
   m_ObjectHideFlags: 0
@@ -647,9 +615,9 @@ AudioSource:
   m_GameObject: {fileID: 3010122169319580909}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 24300002, guid: 70b57e4862ddc27409062f008090b93c, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: e3435cf569b443d4aa84a7cb9a850897, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -749,8 +717,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonBehaviour
   resolveType: 1
   target: {fileID: 3010122169319580909}
-  audioClip: {fileID: 0}
-  audioAutput: {fileID: 0}
+  audioClip: {fileID: 8300000, guid: e3435cf569b443d4aa84a7cb9a850897, type: 3}
+  audioAutput: {fileID: 24300002, guid: 70b57e4862ddc27409062f008090b93c, type: 2}
   showChildIndexes: 0
   childIndex: 0
   grandchildIndex: 0
@@ -771,7 +739,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2976095944285931995
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1142,7 +1110,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &6046733167403143530
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1278,9 +1246,9 @@ AudioSource:
   m_GameObject: {fileID: 5922075688320219721}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 24300002, guid: 70b57e4862ddc27409062f008090b93c, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: e3435cf569b443d4aa84a7cb9a850897, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -1380,8 +1348,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ButtonBehaviour
   resolveType: 1
   target: {fileID: 5922075688320219721}
-  audioClip: {fileID: 0}
-  audioAutput: {fileID: 0}
+  audioClip: {fileID: 8300000, guid: e3435cf569b443d4aa84a7cb9a850897, type: 3}
+  audioAutput: {fileID: 24300002, guid: 70b57e4862ddc27409062f008090b93c, type: 2}
   showChildIndexes: 0
   childIndex: 0
   grandchildIndex: 0

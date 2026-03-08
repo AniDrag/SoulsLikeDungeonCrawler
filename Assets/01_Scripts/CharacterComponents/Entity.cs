@@ -57,7 +57,7 @@ namespace AniDrag.CharacterComponents
             Debug.Log($"{entityName} has died.");
             // Additional death logic can be implemented in derived classes.
             InvokeEntityChanges();
-            this.gameObject.SetActive(false);
+            //this.gameObject.SetActive(false);
         }
        
         #endregion

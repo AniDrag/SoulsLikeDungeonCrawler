@@ -11,8 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8faa8555cf8da9948adc36ab35b66255, type: 3}
   m_Name: CameraSettings
-  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.Player.CameraSettings
-  SensitivityHorizontal: 2
-  SensitivityVertical: 2
+  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.Core.CameraSettings
+  SensitivityHorizontal: 1
+  SensitivityVertical: 1
   FOV: 60
   isInMenu: 0
+  menuesActive: 347

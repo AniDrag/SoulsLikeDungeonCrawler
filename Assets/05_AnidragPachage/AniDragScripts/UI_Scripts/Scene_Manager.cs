@@ -1,22 +1,35 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-public class Scene_Manager : MonoBehaviour
+namespace AniDrag.Core
 {
-    [Tooltip("Prepared for a loading screen")]
-    public GameObject LoadSceneObj;
-    public void SCENE_LoadScene(int sceneIndex)
+    public class Scene_Manager : MonoBehaviour
     {
-        //Add a safety Check
-        SceneManager.LoadSceneAsync(sceneIndex);
-    }
-    public void SCENE_ReloadScene()
-    {
-        int index = SceneManager.GetActiveScene().buildIndex;
-        SceneManager.LoadSceneAsync(index);
-    }
-    public void SCENE_QuitGame()
-    {
-        Application.Quit();
+        public static Scene_Manager Instance { get; private set; }
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        [Tooltip("Prepared for a loading screen")]
+        public GameObject LoadSceneObj;
+        public void SCENE_LoadScene(int sceneIndex)
+        {
+            //Add a safety Check
+            SceneManager.LoadSceneAsync(sceneIndex);
+        }
+        public void SCENE_ReloadScene()
+        {
+            int index = SceneManager.GetActiveScene().buildIndex;
+            SceneManager.LoadSceneAsync(index);
+        }
+        public void SCENE_QuitGame()
+        {
+            Application.Quit();
+        }
     }
 }
-

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using AniDrag.WeaponPack;
 using AniDrag.CharacterComponents;
+using AniDrag.Core;
 namespace AniDrag.AI
 {
     [RequireComponent(typeof(NavMeshAgent))]
@@ -83,23 +84,26 @@ namespace AniDrag.AI
 
         void Update()
         {
-            // Distance culling – if player is too far, skip senses and just wander
-            if (player != null && Vector3.Distance(transform.position, player.position) > maxUpdateDistance)
+            // If player reference is gone, skip distance culling
+            if (player != null && player)
             {
-                // We still want to wander, but we can do it less often
-                if (Time.time - lastSenseUpdateTime >= 0.1f) // arbitrary throttle
+                float distToPlayer = Vector3.Distance(transform.position, player.position);
+                if (distToPlayer > maxUpdateDistance)
                 {
-                    currentTarget = null; // forget any target
-                    HandleNoTarget();     // wander
-                    lastSenseUpdateTime = Time.time;
+                    if (Time.time - lastSenseUpdateTime >= 0.1f)
+                    {
+                        currentTarget = null;
+                        HandleNoTarget();
+                        lastSenseUpdateTime = Time.time;
+                    }
+                    return;
                 }
-                return; // skip the rest of Update
             }
 
             // Throttled sense update
             if (Time.time - lastSenseUpdateTime >= senseUpdateInterval)
             {
-                sense.Core_Update();
+                sense?.Core_Update();
                 lastSenseUpdateTime = Time.time;
             }
 
@@ -107,26 +111,28 @@ namespace AniDrag.AI
             Transform newlyDetected = null;
             if (targetingStrategy != null)
                 newlyDetected = targetingStrategy.UpdateTarget(this);
-            else
-                newlyDetected = sense.detectedTargets.Count > 0 ? sense.detectedTargets[0].transform : null;
+            else if (sense != null && sense.detectedTargets.Count > 0)
+                newlyDetected = sense.detectedTargets[0]?.transform;
 
-            if (newlyDetected != null)
+            if (newlyDetected != null && newlyDetected)
             {
                 currentTarget = newlyDetected;
                 targetLostTime = 0f;
             }
             else
             {
-                if (currentTarget != null)
+                if (currentTarget != null && currentTarget)
                 {
                     targetLostTime += Time.deltaTime;
                     if (targetLostTime >= targetMemoryDuration)
                         currentTarget = null;
                 }
+                else
+                    currentTarget = null;
             }
 
-            // Behavior based on target
-            if (currentTarget != null)
+            // Behavior
+            if (currentTarget != null && currentTarget)
                 HandleTargetDetected();
             else
                 HandleNoTarget();
@@ -134,12 +140,13 @@ namespace AniDrag.AI
 
         void HandleTargetDetected()
         {
-            // 1. Movement
+            if (currentTarget == null || !currentTarget) return; // safety check
+
+            // Movement
             if (movementStrategy != null)
                 movementStrategy.UpdateMovement(this, currentTarget);
             else
             {
-                // fallback simple movement
                 float distance = Vector3.Distance(transform.position, currentTarget.position);
                 if (distance <= detectionStopDistance)
                     agent.isStopped = true;
@@ -150,29 +157,25 @@ namespace AniDrag.AI
                 }
             }
 
-            // 2. Attack logic
+            // Attack logic
             if (attackStrategy != null && weapon != null)
             {
                 float distToTarget = Vector3.Distance(transform.position, currentTarget.position);
                 bool inRange = distToTarget <= attackRange;
 
+                if (inRange && !wasInAttackRange)
+                {
+                    attackStrategy.OnEnterAttackRange(this, currentTarget);
+                    wasInAttackRange = true;
+                }
+                else if (!inRange && wasInAttackRange)
+                {
+                    attackStrategy.OnExitAttackRange(this, currentTarget);
+                    wasInAttackRange = false;
+                }
+
                 if (inRange)
-                {
-                    if (!wasInAttackRange)
-                    {
-                        attackStrategy.OnEnterAttackRange(this, currentTarget);
-                        wasInAttackRange = true;
-                    }
                     attackStrategy.UpdateAttack(this, currentTarget);
-                }
-                else
-                {
-                    if (wasInAttackRange)
-                    {
-                        attackStrategy.OnExitAttackRange(this, currentTarget);
-                        wasInAttackRange = false;
-                    }
-                }
             }
         }
 
@@ -200,5 +203,10 @@ namespace AniDrag.AI
         // Optional: disable script when off-screen to save performance
         void OnBecameVisible() { enabled = true; }
         void OnBecameInvisible() { enabled = false; }
+        public void FUNC_DestroyWhenDead()
+        {
+            Destroy(this.gameObject);
+        }
     }
+   
 }

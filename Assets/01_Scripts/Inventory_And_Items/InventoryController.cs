@@ -1,8 +1,10 @@
 using AniDrag.Core;
 using AniDrag.Utility;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 
 namespace AniDrag.InventoryAndItems
 {
@@ -13,11 +15,13 @@ namespace AniDrag.InventoryAndItems
                 "========================")]
         [SerializeField] private List<ItemStack> startingItems = new List<ItemStack>();
         private InventoryData inventory = new InventoryData();
+        [SerializeField] private PlayerInput inputs;
 
         [Header("========================\n" +
                 "         Events         \n" +
                 "========================")]
         public UnityEvent OnInventoryChanged; // UI listens to this
+        public Action EnableDisableInventory;
 
         [Header("========================\n" +
                 "          Debug         \n" +
@@ -33,6 +37,14 @@ namespace AniDrag.InventoryAndItems
             effectReceiver = gameObject;
             foreach (var ite in startingItems)
                 AddItem(ite.item, ite.amount);
+        }
+        void Update()
+        {
+        
+            if (inputs.actions["Inventory"].triggered)
+            {
+                EnableDisableInventory?.Invoke();
+            }
         }
 
         /// <summary>

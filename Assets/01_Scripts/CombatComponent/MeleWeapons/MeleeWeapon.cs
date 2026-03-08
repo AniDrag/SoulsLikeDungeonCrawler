@@ -143,7 +143,7 @@ namespace AniDrag.WeaponPack
                     var damagable = hit.GetComponent<IDamagable>();
                     if (damagable != null)
                     {
-                        damagable.TakeDamage(baseDamage);
+                        damagable.TakeDamage(baseDamage, owner);
                         hitDuringSwing.Add(hit.gameObject);
 
                         // Record hit for debug

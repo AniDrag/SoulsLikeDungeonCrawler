@@ -27,20 +27,32 @@ public class ButtonBehaviourEditor : Editor
 
         EditorGUILayout.PropertyField(resolveTypeProp);
         EditorGUILayout.PropertyField(targetProp);
+
+        EditorGUILayout.Space();
+
         EditorGUILayout.PropertyField(audioClipProp);
         EditorGUILayout.PropertyField(audioOutputProp);
 
-        // Show indexes based on enum
-        var action = (ButtonBehaviour.ButtonActivationResult)resolveTypeProp.enumValueIndex;
-        bool showIndexes = action == ButtonBehaviour.ButtonActivationResult.DissableChildObject ||
-                           action == ButtonBehaviour.ButtonActivationResult.DissableGrandChildObject;
+        var action = (ButtonBehaviour.ActivationType)resolveTypeProp.enumValueIndex;
 
-        if (showIndexes)
+        bool showChild =
+            action == ButtonBehaviour.ActivationType.DisableChildObject ||
+            action == ButtonBehaviour.ActivationType.EnableChildObject ||
+            action == ButtonBehaviour.ActivationType.DisableGrandChildObject ||
+            action == ButtonBehaviour.ActivationType.EnableGrandChildObject;
+
+        bool showGrandChild =
+            action == ButtonBehaviour.ActivationType.DisableGrandChildObject ||
+            action == ButtonBehaviour.ActivationType.EnableGrandChildObject;
+
+        if (showChild)
         {
-            EditorGUILayout.LabelField("Child/Grandchild Settings", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Child Settings", EditorStyles.boldLabel);
+
             EditorGUILayout.PropertyField(childIndexProp);
 
-            if (action == ButtonBehaviour.ButtonActivationResult.DissableGrandChildObject)
+            if (showGrandChild)
                 EditorGUILayout.PropertyField(grandchildIndexProp);
         }
 

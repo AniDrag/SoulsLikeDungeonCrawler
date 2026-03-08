@@ -16,9 +16,9 @@ MonoBehaviour:
   itemName: Katana
   itemType: 1
   rarity: 1
-  description: 
+  description: A starter weapon, keep it safe its the only weapon for now.
   icon: {fileID: 0}
-  worldPrefab: {fileID: 6038940004187006333, guid: d28aa6bf83910424ebfa5ea06c226552, type: 3}
+  worldPrefab: {fileID: 1618450423286858142, guid: 6cbedc062129ea247a8f0859a8efa85f, type: 3}
   isStackable: 0
   maxStack: 1
   isUnique: 0
@@ -28,10 +28,10 @@ MonoBehaviour:
   effect: 0
   effectValue: 0
   effectTime: 0
-  baseDamage: 15
+  baseDamage: 35
   stats:
-    VIT: 2
-    STR: 3
+    VIT: 3
+    STR: 5
     DEX: 4
     INT: 3
   equipmentType: 6

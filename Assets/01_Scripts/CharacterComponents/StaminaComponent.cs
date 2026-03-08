@@ -13,8 +13,8 @@ namespace AniDrag.CharacterComponents
     public class StaminaComponent : MonoBehaviour
     {
         [Header("========================\n" +
-     "    Stamina Details      \n" +
-     "========================")]
+            "    Stamina Details      \n" +
+            "========================")]
         [field: SerializeField] public int maxStamina { get; private set; } = 100;
         public int currentStamina { get; private set; }
         [SerializeField] private int staminaRegenRate = 5; // Stamina regenerated per second

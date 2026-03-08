@@ -11,16 +11,17 @@ namespace AniDrag.InventoryAndItems
         [SerializeField] private GameObject lootPrefab;
         [SerializeField] private Transform dropZone;
 
-        public List<ItemStack> DropableItems { get; private set; } = new List<ItemStack>();
+        [field:SerializeField] public List<ItemStack> DropableItems { get; private set; } = new List<ItemStack>();
         public void DroopLoot()
         {
+            Debug.Log("I DROPED LOOT");
                 if (DropableItems.Count > 0)
                 {
                     GameObject loot = Instantiate(lootPrefab, dropZone.position, Quaternion.identity);
                     PhysicalItemInstance lootInstance = loot.GetComponent<PhysicalItemInstance>();
                     lootInstance.SetInstanceData(DropableItems);
                 }
-            Destroy(this);
+            Destroy(this.gameObject);
         }
     }
 }

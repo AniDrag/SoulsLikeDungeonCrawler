@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-
+using AniDrag.Core;
 namespace AniDrag.Player
 {
     /// <summary>
@@ -73,40 +73,40 @@ namespace AniDrag.Player
         {
             if (inputs.actions["EnableMouse"].IsPressed())
             { 
-                Debug.Log("Mouse enabled");
+                //Debug.Log("Mouse enabled");
                 settings.EnableCursor();
             }
             else if (inputs.actions["EnableMouse"].WasReleasedThisFrame())
             {
-                Debug.Log("Mouse Dissable");
+                //ebug.Log("Mouse Dissable");
                 settings.DisableCursor();
             }
 
             // Match camera position to tracking transform
             playerCam.transform.position = camTrackPosition.position;
-            if(settings.isInMenu) return; // Skip camera control if in menu
+                       
 
-            // Read look input from PlayerInput
+            if (settings.isInMenu)
+            {
+                if (Mathf.Abs(playerCam.fieldOfView - settings.FOV) > 0.01f)
+                    playerCam.fieldOfView = Mathf.Lerp(playerCam.fieldOfView, settings.FOV, Time.deltaTime * 5f);
+                return;
+            }
+                        
             lookDirection = inputs.actions["Look"].ReadValue<Vector2>();
             if (lookDirection == Vector2.zero) return; // Skip if no input
 
-            // Apply input to rotations with sensitivity scaling
+            
             yRotation += lookDirection.x * baseHorizontalSensitivity * Time.deltaTime * settings.SensitivityHorizontal;
             xRotation -= lookDirection.y * baseVerticalSensitivity * Time.deltaTime * settings.SensitivityVertical;
 
-            // Clamp vertical rotation to prevent flipping
             xRotation = Mathf.Clamp(xRotation, -verticalClamp, verticalClamp);
 
-            // Apply vertical rotation (pitch) to the camera only
             playerCam.transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f);
 
-            // Apply horizontal rotation (yaw) to the player orientation
             if (playerOrientation != null)
                 playerOrientation.rotation = Quaternion.Euler(0f, yRotation, 0f);
 
-            // Smoothly interpolate FOV if changed in settings
-            if (Mathf.Abs(playerCam.fieldOfView - settings.FOV) > 0.01f)
-                playerCam.fieldOfView = Mathf.Lerp(playerCam.fieldOfView, settings.FOV, Time.deltaTime * 5f);
         }
     }
 }

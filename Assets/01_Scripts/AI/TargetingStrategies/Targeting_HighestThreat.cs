@@ -17,7 +17,7 @@ namespace AniDrag.AI
 
             Transform target = highestThreat != null ? highestThreat.transform : null;
 #if UNITY_EDITOR
-            Debug.Log($"[Targeting_HighestThreat] Selected target: {target?.name ?? "None"}");
+           // Debug.Log($"[Targeting_HighestThreat] Selected target: {target?.name ?? "None"}");
 #endif
             return target;
         }

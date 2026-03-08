@@ -70,6 +70,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AniDrag.WeaponPack.MeleeWeapon
   inputType: 0
   weponAnimator: {fileID: 1106959202163540227}
+  owner: {fileID: 0}
   attack: Attack
   combo: ComboStep
   altAttack: AltAttack
@@ -79,7 +80,7 @@ MonoBehaviour:
   lightRecoveryTime: 0.2
   heavyRecoveryTime: 0.8
   maxChainAttacks: 2
-  baseDamage: 10
+  baseDamage: 50
   targetLayers:
     serializedVersion: 2
     m_Bits: 64

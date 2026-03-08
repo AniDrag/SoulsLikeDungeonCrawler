@@ -1,3 +1,4 @@
+using AniDrag.Core;
 using AniDrag.Utility;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -41,7 +42,7 @@ namespace AniDrag.WeaponPack
         }
         private void Update()
         {
-            if(currentWeapon == null) return;
+            if(currentWeapon == null || GameManager.Instance.cameraSettings.isInMenu) return;
             
             switch (currentWeapon.inputType)
             {

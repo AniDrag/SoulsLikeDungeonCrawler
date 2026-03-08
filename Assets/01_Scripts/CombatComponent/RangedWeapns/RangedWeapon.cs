@@ -5,48 +5,43 @@ using UnityEngine;
 namespace AniDrag.WeaponPack
 {
     /// <summary>
-    /// Handles most ranged weapon types: bows, guns, magic staffs, etc.
-    /// Supports physical projectiles, hitscan, charging, burst fire, ammo, and reloading.
+    /// Handles ranged weapons that fire physical projectiles (e.g., guns, bows, magic staffs).
+    /// Supports charging, burst fire, ammo, reloading, and spread.
     /// </summary>
     public class RangedWeapon : WeaponCore
     {
         [Header("========================\n" +
-                "Ranged weapon specific ref\n" +
-                "========================")]
-        [SerializeField] private Camera playerCamera;          // For aiming / raycast direction
-
-        [Header("========================\n" +
                 "    Projectile details      \n" +
                 "========================")]
-        [SerializeField] private GameObject projectilePrefab;  // Physical projectile (null if hitscan)
-        [SerializeField] private Transform firePoint;          // Where projectiles spawn / raycast starts
+        [SerializeField] private GameObject projectilePrefab;          // Physical projectile prefab
+        [SerializeField] private Transform firePoint;                  // Where projectiles spawn
         [Tooltip("Offset applied when instantiating projectile (e.g., to fix model misalignment)")]
         [field: SerializeField] public Vector3 offsetOnInstatioation = Vector3.zero;
 
         [Header("========================\n" +
                 "    Weapon Stats      \n" +
                 "========================")]
-        [SerializeField] private int hitscanDamage = 25;
-        [SerializeField] private float projectileLaunchForce = 20f;   
-        [SerializeField] private float fireChargeTime = 0f;           
-        [SerializeField] private float fireRate = 5f;                 
-        [SerializeField] private float burstDelay = 0.1f;             
-        [SerializeField, Range(1, 10)] private int projectilesPerShot = 1;  
-        [SerializeField] private float spreadAngle = 2f;                
-        [SerializeField] private int shotsPerMagazine = 30;           
-        [SerializeField] private int magazineCapacity = 5;              
-        [SerializeField] private float reloadTime = 2f;                 
-        [SerializeField] private bool hitScan = false;                  
-        [SerializeField] private bool infiniteAmmo = false;             
-        [SerializeField] private LayerMask hitLayers = -1;              
+        [SerializeField] private float projectileLaunchForce = 20f;    // Speed of projectile
+        [SerializeField] private float fireChargeTime = 0f;            // Time to hold before firing (0 = instant)
+        [SerializeField] private float fireRate = 5f;                  // Shots per second (auto weapons)
+        [SerializeField] private float burstDelay = 0.1f;              // Delay between multiple projectiles in one shot
+        [SerializeField, Range(1, 10)] private int projectilesPerShot = 1;
+        [SerializeField] private float spreadAngle = 2f;               // Spread in degrees for multi-projectile
+        [SerializeField] private int shotsPerMagazine = 30;
+        [SerializeField] private int magazineCapacity = 5;
+        [SerializeField] private float reloadTime = 2f;
+        [SerializeField] private bool infiniteAmmo = false;
+
+        // Optional: if you want to use a camera for player aiming (if not assigned, falls back to owner's forward)
+        [Tooltip("If assigned, this camera's forward direction is used for aiming (for player). Otherwise uses owner's forward.")]
+        [SerializeField] private Camera playerCamera;
 
         // Private state
-        private int currentAmmoInMag;        
-        private int totalRemainingAmmo;       
-        private bool isFiring = false;
+        private int currentAmmoInMag;
+        private int totalRemainingAmmo;
         private bool isCharging = false;
         private float chargeStartTime;
-        private float nextFireTime;            
+        private float nextFireTime;
         private Coroutine reloadCoroutine;
         private Coroutine fireCoroutine;
 
@@ -68,7 +63,7 @@ namespace AniDrag.WeaponPack
         {
             if (!isPressed)
             {
-                // Button released � handle charge fire
+                // Button released – handle charge fire
                 if (isCharging)
                 {
                     float chargeDuration = Time.time - chargeStartTime;
@@ -109,7 +104,7 @@ namespace AniDrag.WeaponPack
 
         public override void Aim(bool isPressed)
         {
-            // Optional: aim down sights (ADS) � can be used to zoom or change weapon state
+            // Optional: aim down sights – can be used to zoom or change weapon state
             Debug.Log("Aim not implemented");
         }
 
@@ -129,7 +124,7 @@ namespace AniDrag.WeaponPack
             // Consume ammo (if not infinite)
             if (!infiniteAmmo) currentAmmoInMag--;
 
-            // Start firing sequence (could be burst or single)
+            // Start firing sequence (burst)
             if (fireCoroutine != null) StopCoroutine(fireCoroutine);
             fireCoroutine = StartCoroutine(FireProjectiles());
 
@@ -141,11 +136,7 @@ namespace AniDrag.WeaponPack
         {
             for (int i = 0; i < projectilesPerShot; i++)
             {
-                if (hitScan)
-                    PerformHitscan();
-                else
-                    SpawnPhysicalProjectile();
-
+                SpawnPhysicalProjectile();
                 if (i < projectilesPerShot - 1)
                     yield return new WaitForSeconds(burstDelay);
             }
@@ -159,61 +150,52 @@ namespace AniDrag.WeaponPack
                 return;
             }
 
-            // Calculate direction with spread
-            Vector3 direction = GetSpreadDirection();
+            // Determine aim direction
+            Vector3 aimDirection = GetAimDirection();
+
+            // Apply spread if needed
+            Vector3 finalDirection = ApplySpread(aimDirection);
 
             // Instantiate projectile
-            GameObject proj = Instantiate(projectilePrefab, firePoint.position + offsetOnInstatioation, Quaternion.LookRotation(direction));
+            GameObject proj = Instantiate(projectilePrefab, firePoint.position + offsetOnInstatioation, Quaternion.LookRotation(finalDirection));
             Rigidbody rb = proj.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                rb.linearVelocity = direction * projectileLaunchForce;
+                rb.linearVelocity = finalDirection * projectileLaunchForce;
             }
 
-            // Optional: pass damage / owner info via a component on the projectile
-            var projDamage = proj.GetComponent<Projectile>();
-            if (projDamage != null)
-                projDamage.Initialize(GameManager.Instance.Players[0]);
+            // Set owner for damage attribution and XP
+            Projectile projectileScript = proj.GetComponent<Projectile>();
+            if (projectileScript != null)
+                projectileScript.Initialize(owner); // owner is set by WeaponsController
         }
 
-        private void PerformHitscan()
+        /// <summary>
+        /// Returns the direction the entity is looking.
+        /// Uses playerCamera if assigned, otherwise owner's forward.
+        /// </summary>
+        private Vector3 GetAimDirection()
         {
-            if (playerCamera == null)
-            {
-                Debug.LogError("Hitscan requires a player camera!");
-                return;
-            }
+            if (playerCamera != null)
+                return playerCamera.transform.forward;
 
-            // Direction with spread
-            Vector3 direction = GetSpreadDirection();
+            if (owner != null)
+                return owner.transform.forward;
 
-            Ray ray = new Ray(playerCamera.transform.position, direction);
-            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, hitLayers))
-            {
-                // Apply damage
-                var damageable = hit.collider.GetComponent<IDamagable>();
-                damageable?.TakeDamage(hitscanDamage);
-
-                // Optionally spawn impact effect
-            }
+            // Fallback to firePoint's forward (should not happen)
+            return firePoint.forward;
         }
 
-        private Vector3 GetSpreadDirection()
+        private Vector3 ApplySpread(Vector3 baseDirection)
         {
-            if (playerCamera == null) return firePoint.forward;
+            if (projectilesPerShot <= 1 || spreadAngle <= 0)
+                return baseDirection;
 
-            Vector3 baseDirection = playerCamera.transform.forward;
-
-            if (projectilesPerShot > 1 && spreadAngle > 0)
-            {
-                // Generate random spread within cone
-                float randomX = Random.Range(-spreadAngle, spreadAngle);
-                float randomY = Random.Range(-spreadAngle, spreadAngle);
-                Quaternion spreadRot = Quaternion.Euler(randomY, randomX, 0);
-                baseDirection = spreadRot * baseDirection;
-            }
-
-            return baseDirection.normalized;
+            // Generate random spread within cone
+            float randomX = Random.Range(-spreadAngle, spreadAngle);
+            float randomY = Random.Range(-spreadAngle, spreadAngle);
+            Quaternion spreadRot = Quaternion.Euler(randomY, randomX, 0);
+            return spreadRot * baseDirection;
         }
 
         #endregion

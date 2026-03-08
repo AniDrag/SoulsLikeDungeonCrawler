@@ -1,5 +1,6 @@
 using AniDrag.Core;
 using UnityEngine;
+using UnityEngine.Events;
 namespace AniDrag.CharacterComponents
 {
     [RequireComponent(typeof(HealthComponent))]
@@ -12,6 +13,8 @@ namespace AniDrag.CharacterComponents
       "    Player Entity Refrences      \n" +
       "========================")]
         [field: SerializeField] public StaminaComponent entityStamina { get; private set; }
+
+        public UnityEvent updateUI;
         protected override void Initialize()
         {
             base.Initialize();
@@ -26,6 +29,7 @@ namespace AniDrag.CharacterComponents
             {
                 Debug.LogWarning($"{entityName} does not have a StaminaComponent attached.");
             }
+            updateUI?.Invoke();
         }
         public override void OnLevelUp(int level)
         {

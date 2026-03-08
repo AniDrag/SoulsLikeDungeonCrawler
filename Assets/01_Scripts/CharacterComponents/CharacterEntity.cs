@@ -72,10 +72,27 @@ namespace AniDrag.CharacterComponents
             InvokeEntityChanges();
         }
         protected void SetEntityLevel(int level) => entityLevel = level;
-        override public void OnDeath(GameObject owner)
+        public override void OnDeath(GameObject owner)
         {
             base.OnDeath(owner);
-            owner.GetComponent<XpComponent>()?.GainXp(100 * entityLevel); // Example: Grant XP to the killer if they have an XPComponent.
+
+            if (owner != null)
+            {
+                var xpComp = owner.GetComponent<XpComponent>();
+                if (xpComp != null)
+                {
+                    xpComp.GainXp(100 * entityLevel);
+                    Debug.Log($"{entityName} has died and granted XP to the killer: {owner.name}.");
+                }
+                else
+                {
+                    Debug.LogWarning($"Owner {owner.name} has no XpComponent. No XP granted.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"{entityName} died but owner is null. No XP granted.");
+            }
 
         }
     }

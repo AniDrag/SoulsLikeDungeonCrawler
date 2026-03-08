@@ -1,7 +1,7 @@
 using AniDrag.Utility;
 using UnityEngine;
 
-namespace AniDrag.Player
+namespace AniDrag.Core
 {
     [CreateAssetMenu(fileName = "CameraSettings", menuName = "AniDrag/Settings/CameraSettings")]
     public class CameraSettings : ScriptableObject
@@ -14,7 +14,7 @@ namespace AniDrag.Player
         public float FOV = 60;
 
         public bool isInMenu = false;
-
+        public int menuesActive = 0;
         [Button]
         public void DisableCursor()
         {
@@ -28,6 +28,22 @@ namespace AniDrag.Player
             Cursor.lockState = CursorLockMode.Confined;
             Cursor.visible = true;
             isInMenu = true;
+        }
+        public void EnableMenuPanel()
+        {
+            menuesActive++;
+            Debug.Log("Menues active: " + menuesActive);
+            if (menuesActive > 1) return;
+            EnableCursor();
+        }
+        public void DisableMenuPanel()
+        {
+            menuesActive--;
+            Debug.Log("Menues active: " + menuesActive);
+            if (menuesActive > 0) return;
+            DisableCursor();
+
+
         }
     }
 }

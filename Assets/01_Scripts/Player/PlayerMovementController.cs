@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using AniDrag.CharacterComponents;
 using AniDrag.Core;
+using System.Runtime.InteropServices.WindowsRuntime;
 namespace AniDrag.Player
 {
     /// <summary>
@@ -47,6 +48,7 @@ namespace AniDrag.Player
         [Header("========================\n" +
        "     Refrences      \n" +
        "========================")]
+        [SerializeField] private CameraSettings cameraSettings;
         [Tooltip("The Rigidbody used for physics movement.")]
         [SerializeField] private Rigidbody body; public Rigidbody Body => body;
         [Tooltip("The PlayerInput component (new Input System).")]
@@ -242,6 +244,7 @@ namespace AniDrag.Player
         }
         protected override void FixedUpdate()
         {
+           //if (cameraSettings.isInMenu)return;
             EnvironmentCheck();
             //ApplyMovement();
 
