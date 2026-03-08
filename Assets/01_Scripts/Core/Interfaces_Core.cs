@@ -16,7 +16,7 @@ namespace AniDrag.Core
     /// </summary>
     public interface IDamagable
     {
-        public void TakeDamage(int amount);
+        public void TakeDamage(int amount, GameObject owner = null);
 
         public Action DeathEvent { get; set; }
     }

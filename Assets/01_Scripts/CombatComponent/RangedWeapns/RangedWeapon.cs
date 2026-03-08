@@ -26,26 +26,27 @@ namespace AniDrag.WeaponPack
         [Header("========================\n" +
                 "    Weapon Stats      \n" +
                 "========================")]
-        [SerializeField] private float projectileLaunchForce = 20f;   // Speed for physical projectiles
-        [SerializeField] private float fireChargeTime = 0f;           // Time to hold before firing (0 = instant)
-        [SerializeField] private float fireRate = 5f;                  // Shots per second (auto weapons)
-        [SerializeField] private float burstDelay = 0.1f;              // Delay between multiple projectiles in one shot
-        [SerializeField, Range(1, 10)] private int projectilesPerShot = 1;  // Simultaneous projectiles (spread)
-        [SerializeField] private float spreadAngle = 2f;                // Spread in degrees for multi-projectile
-        [SerializeField] private int shotsPerMagazine = 30;            // Number of shots per magazine
-        [SerializeField] private int magazineCapacity = 5;              // Number of magazines (total ammo)
-        [SerializeField] private float reloadTime = 2f;                 // Time to reload
-        [SerializeField] private bool hitScan = false;                  // True = raycast, false = physical projectile
-        [SerializeField] private bool infiniteAmmo = false;             // Ignores ammo consumption
-        [SerializeField] private LayerMask hitLayers = -1;              // What hitscan can hit
+        [SerializeField] private int hitscanDamage = 25;
+        [SerializeField] private float projectileLaunchForce = 20f;   
+        [SerializeField] private float fireChargeTime = 0f;           
+        [SerializeField] private float fireRate = 5f;                 
+        [SerializeField] private float burstDelay = 0.1f;             
+        [SerializeField, Range(1, 10)] private int projectilesPerShot = 1;  
+        [SerializeField] private float spreadAngle = 2f;                
+        [SerializeField] private int shotsPerMagazine = 30;            /
+        [SerializeField] private int magazineCapacity = 5;              
+        [SerializeField] private float reloadTime = 2f;                 
+        [SerializeField] private bool hitScan = false;                  
+        [SerializeField] private bool infiniteAmmo = false;             
+        [SerializeField] private LayerMask hitLayers = -1;              
 
         // Private state
-        private int currentAmmoInMag;        // Rounds left in current magazine
-        private int totalRemainingAmmo;       // Rounds not in magazine (reserve)
+        private int currentAmmoInMag;        
+        private int totalRemainingAmmo;       
         private bool isFiring = false;
         private bool isCharging = false;
         private float chargeStartTime;
-        private float nextFireTime;            // For fire rate limiting
+        private float nextFireTime;            
         private Coroutine reloadCoroutine;
         private Coroutine fireCoroutine;
 
@@ -170,9 +171,9 @@ namespace AniDrag.WeaponPack
             }
 
             // Optional: pass damage / owner info via a component on the projectile
-            var projDamage = proj.GetComponent<IDamageDealer>();
+            var projDamage = proj.GetComponent<Projectile>();
             if (projDamage != null)
-                projDamage.Initialize(/* damage, owner */);
+                projDamage.Initialize(GameManager.Instance.Players[0]);
         }
 
         private void PerformHitscan()
@@ -191,7 +192,7 @@ namespace AniDrag.WeaponPack
             {
                 // Apply damage
                 var damageable = hit.collider.GetComponent<IDamagable>();
-                damageable?.TakeDamage(/* damage value from somewhere */);
+                damageable?.TakeDamage(hitscanDamage);
 
                 // Optionally spawn impact effect
             }

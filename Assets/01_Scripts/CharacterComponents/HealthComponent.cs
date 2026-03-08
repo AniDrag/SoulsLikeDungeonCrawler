@@ -46,7 +46,7 @@ namespace AniDrag.CharacterComponents
         [Header("========================\n" +
       "    Event Connectors      \n" +
       "========================")]
-        public UnityEvent onDeath;
+        public UnityEvent<GameObject> onDeath;
         public UnityEvent<int> onHealthChange;
 
 
@@ -131,7 +131,7 @@ namespace AniDrag.CharacterComponents
             currentShield = Mathf.Min(currentShield + amount, maxShield);
             onHealthChanged?.Invoke(this);
         }
-        public void TakeDamage(int amount)
+        public void TakeDamage(int amount, GameObject owner = null)
         {
             // Stop regen timer
             lastDamageTime = Time.time;
@@ -148,7 +148,7 @@ namespace AniDrag.CharacterComponents
             if (currentHealth <= 0)
             {
                 DeathEvent?.Invoke();
-                onDeath?.Invoke();
+                onDeath?.Invoke(owner);
             }
 
             onHealthChanged?.Invoke(this);
