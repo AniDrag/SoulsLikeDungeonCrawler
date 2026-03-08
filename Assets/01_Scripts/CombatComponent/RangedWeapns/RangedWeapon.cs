@@ -33,7 +33,7 @@ namespace AniDrag.WeaponPack
         [SerializeField] private float burstDelay = 0.1f;             
         [SerializeField, Range(1, 10)] private int projectilesPerShot = 1;  
         [SerializeField] private float spreadAngle = 2f;                
-        [SerializeField] private int shotsPerMagazine = 30;            /
+        [SerializeField] private int shotsPerMagazine = 30;           
         [SerializeField] private int magazineCapacity = 5;              
         [SerializeField] private float reloadTime = 2f;                 
         [SerializeField] private bool hitScan = false;                  

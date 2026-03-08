@@ -40,9 +40,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3125860631754290587}
-  - component: {fileID: 8453973461891567007}
-  - component: {fileID: 3579598766463159007}
-  - component: {fileID: 3469389090963313105}
   m_Layer: 0
   m_Name: SimpleSkeleton
   m_TagString: Untagged
@@ -66,72 +63,6 @@ Transform:
   - {fileID: 4437983558557497359}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8453973461891567007
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1951869967088758895}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59ee33d38cadbd949a8a782fefd9cae1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.CharacterComponents.Entity
-  <entityName>k__BackingField: 'Skeli '
-  <entityLevel>k__BackingField: 5
-  <entityClass>k__BackingField: {fileID: 0}
-  <entityStats>k__BackingField:
-    VIT: 0
-    STR: 0
-    DEX: 0
-    INT: 0
-  <entityHealth>k__BackingField: {fileID: 3579598766463159007}
-  <entityEquipment>k__BackingField: {fileID: 3469389090963313105}
-  onEntityDeath:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &3579598766463159007
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1951869967088758895}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d8ff473143050f4c93465af0972856b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.CharacterComponents.HealthComponent
-  HAS_CHARACTER_COMPONENT: 0
-  USE_REGENERATION: 0
-  regenerateHealth: 0
-  <maxHealth>k__BackingField: 100
-  healtRegen: 25
-  regenerateShild: 0
-  <maxShield>k__BackingField: 100
-  <defense>k__BackingField: 1
-  onDeath:
-    m_PersistentCalls:
-      m_Calls: []
-  regenDelay: 15
-  regenInterval: 1
-  debugDamage: 50
-  debugRegenAmount: 50
---- !u!114 &3469389090963313105
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1951869967088758895}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 823140139c388af4589105a7e0ab68fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.CharacterComponents.ManagerEquipment
-  startingEquipment: []
-  debugEquipment: {fileID: 0}
 --- !u!1 &2273895343298600785
 GameObject:
   m_ObjectHideFlags: 0
@@ -304,6 +235,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5832218441682878519, guid: 962db03e6008e36418a9bcec255a0fad, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 8828101d1ea790c45a9f2ed424c3a48f, type: 2}
     - target: {fileID: 919132149155446097, guid: 962db03e6008e36418a9bcec255a0fad, type: 3}
       propertyPath: m_Name
       value: WhiteSkeleton

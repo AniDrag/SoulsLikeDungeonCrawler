@@ -69,6 +69,7 @@ namespace AniDrag.WeaponPack
             GameObject go = Instantiate(weaponPrefab, HandR);
 
             currentWeapon = go.GetComponent<WeaponCore>();
+            currentWeapon.owner = this.gameObject;
 
             if (currentWeapon == null)
             {

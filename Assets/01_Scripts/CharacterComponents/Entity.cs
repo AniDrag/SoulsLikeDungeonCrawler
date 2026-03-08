@@ -52,7 +52,7 @@ namespace AniDrag.CharacterComponents
         }
        
         // This is called by the HealthComponent when health reaches zero.
-        public virtual void OnDeath()
+        public virtual void OnDeath(GameObject owner)
         {
             Debug.Log($"{entityName} has died.");
             // Additional death logic can be implemented in derived classes.

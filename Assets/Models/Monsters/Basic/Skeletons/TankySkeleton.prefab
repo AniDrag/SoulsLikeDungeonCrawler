@@ -251,6 +251,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -5832218441682878519, guid: e7570524c3c3b2b4fbb2118bbf127353, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1af2fde095144a745836983411db44d9, type: 2}
     - target: {fileID: 919132149155446097, guid: e7570524c3c3b2b4fbb2118bbf127353, type: 3}
       propertyPath: m_Name
       value: BlackSkeleton

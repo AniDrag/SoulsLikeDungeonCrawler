@@ -39,7 +39,7 @@ namespace AniDrag.WeaponPack
           */
         public WeaponInputType inputType;
         public Animator weponAnimator;
-
+        public GameObject owner;
         #region Mele weapon virtual functions
         public virtual void Attack(bool isPressed = true) { }
         public virtual void AltAttack(bool isPressed = true) { }       

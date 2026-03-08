@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6394155563511060278}
-  - component: {fileID: 4869365877521182151}
+  - component: {fileID: 309100888700906298}
   m_Layer: 0
   m_Name: ArgonStaff
   m_TagString: Untagged
@@ -57,7 +57,7 @@ Transform:
   m_GameObject: {fileID: 9092304177192833513}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.924821, y: 0.9795607, z: -2.374972}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -65,7 +65,7 @@ Transform:
   - {fileID: 4670584098106742646}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4869365877521182151
+--- !u!114 &309100888700906298
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -74,24 +74,31 @@ MonoBehaviour:
   m_GameObject: {fileID: 9092304177192833513}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 753bcb84c6ac1914cbcf1bddfa04fc84, type: 3}
+  m_Script: {fileID: 11500000, guid: c4600695dd6b18642bdecaa3751c0035, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.CombatSystem.RangedWeapon
-  <weaponName>k__BackingField: Apostels Staff
+  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.WeaponPack.RangedWeapon
+  inputType: 0
+  weponAnimator: {fileID: 0}
+  owner: {fileID: 0}
   playerCamera: {fileID: 0}
-  projectilePrefab: {fileID: 281734280402017182, guid: 7e4bc03fc02274c40b43e0086bb7cdf0, type: 3}
+  projectilePrefab: {fileID: 281734280402017182, guid: c3634c3b83475254faa47de4dd5e5864, type: 3}
   firePoint: {fileID: 4670584098106742646}
   offsetOnInstatioation: {x: 0, y: 0, z: 0}
+  hitscanDamage: 25
   projectileLaunchForce: 20
-  fireChargeTime: 0.1
-  fireRate: 5
-  fireRateFolMultishot: 1
+  fireChargeTime: 1.2
+  fireRate: 3
+  burstDelay: 0.1
   projectilesPerShot: 1
-  shotsPerProjectileHolder: 1
-  projectileHolderCapasity: -1
+  spreadAngle: 2
+  shotsPerMagazine: 999999
+  magazineCapacity: 1
   reloadTime: 2
   hitScan: 0
   infiniteAmmo: 1
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 192
 --- !u!1001 &8998471606032416995
 PrefabInstance:
   m_ObjectHideFlags: 0

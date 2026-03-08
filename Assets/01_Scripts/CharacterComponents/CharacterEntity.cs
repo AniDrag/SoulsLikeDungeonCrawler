@@ -17,9 +17,9 @@ namespace AniDrag.CharacterComponents
        "    Character Entity Refrences      \n" +
        "========================")]
         [field: SerializeField] public ManagerEquipment entityEquipment { get; private set; }
-        [field:SerializeField] public XpComponent entityXp { get; private set; }
+        [field: SerializeField] public XpComponent entityXp { get; private set; }
 
-        
+
         protected override void Initialize()
         {
             HealthInitialization();
@@ -57,7 +57,7 @@ namespace AniDrag.CharacterComponents
         public virtual void OnLevelUp(int level)
         {
             entityLevel = level;
-            BaseEntityLevelUpDetails(); 
+            BaseEntityLevelUpDetails();
             InvokeEntityChanges();
         }
         protected void BaseEntityLevelUpDetails()
@@ -72,5 +72,11 @@ namespace AniDrag.CharacterComponents
             InvokeEntityChanges();
         }
         protected void SetEntityLevel(int level) => entityLevel = level;
+        override public void OnDeath(GameObject owner)
+        {
+            base.OnDeath(owner);
+            owner.GetComponent<XpComponent>()?.GainXp(100 * entityLevel); // Example: Grant XP to the killer if they have an XPComponent.
+
+        }
     }
 }

@@ -494,6 +494,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "EnableMouse",
+                    "type": "Button",
+                    "id": "f7d08488-9078-4fb7-ae73-7129d068a0c9",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -912,6 +921,17 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "TrackedDeviceOrientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ad629b22-0b54-43a1-b2e0-c655cecb06f6",
+                    "path": "<Keyboard>/leftAlt",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "EnableMouse",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

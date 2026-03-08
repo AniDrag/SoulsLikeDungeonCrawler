@@ -1,6 +1,5 @@
 using AniDrag.Core;
 using UnityEngine;
-[RequireComponent(typeof(Rigidbody))]
 namespace AniDrag.WeaponPack
 {
 
@@ -10,6 +9,7 @@ namespace AniDrag.WeaponPack
     /// - Tracks the owner (who shot it).
     /// - Self?destructs after impact or lifetime.
     /// </summary>
+    [RequireComponent(typeof(Rigidbody))]
     public class Projectile : MonoBehaviour
     {
         [Header("Damage")]

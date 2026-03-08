@@ -71,8 +71,20 @@ namespace AniDrag.Player
         /// </summary>
         private void Update()
         {
+            if (inputs.actions["EnableMouse"].IsPressed())
+            { 
+                Debug.Log("Mouse enabled");
+                settings.EnableCursor();
+            }
+            else if (inputs.actions["EnableMouse"].WasReleasedThisFrame())
+            {
+                Debug.Log("Mouse Dissable");
+                settings.DisableCursor();
+            }
+
             // Match camera position to tracking transform
             playerCam.transform.position = camTrackPosition.position;
+            if(settings.isInMenu) return; // Skip camera control if in menu
 
             // Read look input from PlayerInput
             lookDirection = inputs.actions["Look"].ReadValue<Vector2>();
