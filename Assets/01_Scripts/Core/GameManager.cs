@@ -16,6 +16,7 @@ namespace AniDrag.Core
             }
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            SpawnPlayer();
         }
 
         public GameObject PlayerPrefab;
@@ -25,10 +26,18 @@ namespace AniDrag.Core
         [Button]
         public void SpawnPlayer()
         {
+            if(Players.Count > 0) return;
             int rnd = Random.Range(0, spawnpoints.Count - 1);
 
-            GameObject player = Instantiate(PlayerPrefab, spawnpoints[rnd].position, Quaternion.identity);
+            GameObject player = Instantiate(PlayerPrefab, Vector3.zero, Quaternion.identity);
             Players.Add(player.transform.GetChild(0).gameObject);
+        }
+        public void OnLevelWasLoaded(int level)
+        {
+            foreach(var player in Players)
+            {
+                player.transform.position = Vector3.zero;//spawnpoints[Random.Range(0, spawnpoints.Count - 1)].position;
+            }
         }
     }
 }

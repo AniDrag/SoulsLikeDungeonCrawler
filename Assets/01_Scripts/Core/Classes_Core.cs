@@ -3,8 +3,9 @@ using UnityEngine;
 
 namespace AniDrag.Core
 {
+    [CreateAssetMenu(menuName = "AniDrag/Item/SimpleItem", fileName = "Item")]
     [System.Serializable]
-    public abstract class Item : ScriptableObject, IEquippable
+    public class Item : ScriptableObject, IEquippable
     {
         [Header("Basic Info")]
         public string IDitem = string.Empty;

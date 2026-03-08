@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using AniDrag.Core;
+using AniDrag.Quest;
 
 namespace AniDrag.CharacterComponents
 {
@@ -75,6 +76,8 @@ namespace AniDrag.CharacterComponents
         public override void OnDeath(GameObject owner)
         {
             base.OnDeath(owner);
+
+            QuestBus.Instance.Enqueue(new DeathEvent(this, owner.GetComponent<Entity>()));
 
             if (owner != null)
             {

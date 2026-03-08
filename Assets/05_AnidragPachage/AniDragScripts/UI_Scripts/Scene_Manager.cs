@@ -21,11 +21,13 @@ namespace AniDrag.Core
         {
             //Add a safety Check
             SceneManager.LoadSceneAsync(sceneIndex);
+            GameManager.Instance.SpawnPlayer();
         }
         public void SCENE_ReloadScene()
         {
             int index = SceneManager.GetActiveScene().buildIndex;
             SceneManager.LoadSceneAsync(index);
+            GameManager.Instance.SpawnPlayer();
         }
         public void SCENE_QuitGame()
         {

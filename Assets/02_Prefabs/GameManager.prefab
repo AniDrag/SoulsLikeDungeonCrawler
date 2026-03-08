@@ -45,11 +45,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a99f8f9e47078af4c8aad246859767fe, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.Core.GameManager
   cameraSettings: {fileID: 11400000, guid: b6cf7044597f12f4b98568d6dadc887b, type: 2}
-  PlayerPrefab: {fileID: 0}
-  Players:
-  - {fileID: 0}
+  PlayerPrefab: {fileID: 2084965406829876185, guid: af32972e17c38d1469cf45af86ed1b8f, type: 3}
+  Players: []
   spawnpoints: []
 --- !u!114 &3868219649607358279
 MonoBehaviour:

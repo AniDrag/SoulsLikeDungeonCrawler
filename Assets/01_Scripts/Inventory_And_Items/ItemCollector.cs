@@ -1,4 +1,5 @@
 using AniDrag.Core;
+using AniDrag.Quest;
 using UnityEngine;
 namespace AniDrag.InventoryAndItems
 {
@@ -33,7 +34,10 @@ namespace AniDrag.InventoryAndItems
                 if (item.items.Count > 0)
                 {
                     foreach (ItemStack i in item.items)
+                    {
+                        QuestBus.Instance.Enqueue(new ItemPickedEvent(i.item, i.amount));
                         inventory.AddItem(i.item, i.amount);
+                    }
                 }
 
                 Destroy(item.gameObject);

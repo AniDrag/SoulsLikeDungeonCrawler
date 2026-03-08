@@ -914,7 +914,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AniDrag.CharacterComponents.CharacterEntity
   <entityHealth>k__BackingField: {fileID: 9004129790262674521}
-  <entityName>k__BackingField: Mele enemy
+  <entityName>k__BackingField: RangedGhost
   onEntityDeath:
     m_PersistentCalls:
       m_Calls:

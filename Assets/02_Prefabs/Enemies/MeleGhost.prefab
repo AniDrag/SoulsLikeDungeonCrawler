@@ -431,7 +431,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AniDrag.CharacterComponents.CharacterEntity
   <entityHealth>k__BackingField: {fileID: 5761763373142872206}
-  <entityName>k__BackingField: Mele enemy
+  <entityName>k__BackingField: MeleGhost
   onEntityDeath:
     m_PersistentCalls:
       m_Calls:

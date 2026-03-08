@@ -1,40 +1,40 @@
+using AniDrag.CharacterComponents;
 using AniDrag.Core;
 using System.Collections;
 using UnityEngine;
 
 namespace AniDrag.WeaponPack
 {
-    /// <summary>
-    /// Handles ranged weapons that fire physical projectiles (e.g., guns, bows, magic staffs).
-    /// Supports charging, burst fire, ammo, reloading, and spread.
-    /// </summary>
     public class RangedWeapon : WeaponCore
     {
         [Header("========================\n" +
                 "    Projectile details      \n" +
                 "========================")]
-        [SerializeField] private GameObject projectilePrefab;          // Physical projectile prefab
-        [SerializeField] private Transform firePoint;                  // Where projectiles spawn
+        [SerializeField] private GameObject projectilePrefab;
+        [SerializeField] private Transform firePoint;
         [Tooltip("Offset applied when instantiating projectile (e.g., to fix model misalignment)")]
         [field: SerializeField] public Vector3 offsetOnInstatioation = Vector3.zero;
 
         [Header("========================\n" +
                 "    Weapon Stats      \n" +
                 "========================")]
-        [SerializeField] private float projectileLaunchForce = 20f;    // Speed of projectile
-        [SerializeField] private float fireChargeTime = 0f;            // Time to hold before firing (0 = instant)
-        [SerializeField] private float fireRate = 5f;                  // Shots per second (auto weapons)
-        [SerializeField] private float burstDelay = 0.1f;              // Delay between multiple projectiles in one shot
+        [SerializeField] private float projectileLaunchForce = 20f;
+        [SerializeField] private float fireChargeTime = 0f;
+        [SerializeField] private float fireRate = 5f;
+        [SerializeField] private float burstDelay = 0.1f;
         [SerializeField, Range(1, 10)] private int projectilesPerShot = 1;
-        [SerializeField] private float spreadAngle = 2f;               // Spread in degrees for multi-projectile
+        [SerializeField] private float spreadAngle = 2f;
         [SerializeField] private int shotsPerMagazine = 30;
         [SerializeField] private int magazineCapacity = 5;
         [SerializeField] private float reloadTime = 2f;
         [SerializeField] private bool infiniteAmmo = false;
 
-        // Optional: if you want to use a camera for player aiming (if not assigned, falls back to owner's forward)
+        // Optional: if assigned, used for player aiming
         [Tooltip("If assigned, this camera's forward direction is used for aiming (for player). Otherwise uses owner's forward.")]
         [SerializeField] private Camera playerCamera;
+
+        // For AI: we can set a target to aim at
+        private Entity currentTarget;  // if null, uses forward direction
 
         // Private state
         private int currentAmmoInMag;
@@ -54,8 +54,29 @@ namespace AniDrag.WeaponPack
         private void InitializeAmmo()
         {
             currentAmmoInMag = shotsPerMagazine;
-            totalRemainingAmmo = shotsPerMagazine * (magazineCapacity - 1); // one mag already loaded
+            totalRemainingAmmo = shotsPerMagazine * (magazineCapacity - 1);
         }
+
+        #region Public API for AI
+
+        /// <summary>
+        /// Set a target for the weapon to aim at. If null, weapon uses owner's forward direction.
+        /// </summary>
+        public void SetTarget(Entity target)
+        {
+            currentTarget = target;
+        }
+
+        /// <summary>
+        /// Convenience method for AI: sets target and fires.
+        /// </summary>
+        public void FireAtTarget(Entity target)
+        {
+            SetTarget(target);
+            Fire(true);
+        }
+
+        #endregion
 
         #region WeaponCore Overrides
 
@@ -63,7 +84,6 @@ namespace AniDrag.WeaponPack
         {
             if (!isPressed)
             {
-                // Button released – handle charge fire
                 if (isCharging)
                 {
                     float chargeDuration = Time.time - chargeStartTime;
@@ -74,23 +94,20 @@ namespace AniDrag.WeaponPack
                 return;
             }
 
-            // Button pressed
             if (fireChargeTime > 0f)
             {
-                // Start charging
                 isCharging = true;
                 chargeStartTime = Time.time;
             }
             else
             {
-                // Instant fire
                 AttemptFire();
             }
         }
 
         public override void AltFire(bool isPressed)
         {
-            // Optional: alt-fire logic (e.g., scope, underbarrel, etc.)
+            // Optional: alt-fire logic
             Debug.Log("AltFire not implemented");
         }
 
@@ -104,8 +121,7 @@ namespace AniDrag.WeaponPack
 
         public override void Aim(bool isPressed)
         {
-            // Optional: aim down sights – can be used to zoom or change weapon state
-            Debug.Log("Aim not implemented");
+            // Optional: aim down sights
         }
 
         #endregion
@@ -114,21 +130,18 @@ namespace AniDrag.WeaponPack
 
         private void AttemptFire()
         {
-            if (Time.time < nextFireTime) return;                     // Fire rate limit
+            if (Time.time < nextFireTime) return;
             if (currentAmmoInMag <= 0 && !infiniteAmmo)
             {
                 Debug.Log("Out of ammo! Press reload.");
                 return;
             }
 
-            // Consume ammo (if not infinite)
             if (!infiniteAmmo) currentAmmoInMag--;
 
-            // Start firing sequence (burst)
             if (fireCoroutine != null) StopCoroutine(fireCoroutine);
             fireCoroutine = StartCoroutine(FireProjectiles());
 
-            // Set next allowed fire time
             nextFireTime = Time.time + (1f / fireRate);
         }
 
@@ -153,36 +166,45 @@ namespace AniDrag.WeaponPack
             // Determine aim direction
             Vector3 aimDirection = GetAimDirection();
 
-            // Apply spread if needed
+            // Apply spread
             Vector3 finalDirection = ApplySpread(aimDirection);
 
             // Instantiate projectile
             GameObject proj = Instantiate(projectilePrefab, firePoint.position + offsetOnInstatioation, Quaternion.LookRotation(finalDirection));
             Rigidbody rb = proj.GetComponent<Rigidbody>();
             if (rb != null)
-            {
                 rb.linearVelocity = finalDirection * projectileLaunchForce;
-            }
 
-            // Set owner for damage attribution and XP
             Projectile projectileScript = proj.GetComponent<Projectile>();
             if (projectileScript != null)
-                projectileScript.Initialize(owner); // owner is set by WeaponsController
+                projectileScript.Initialize(owner);
         }
 
         /// <summary>
-        /// Returns the direction the entity is looking.
-        /// Uses playerCamera if assigned, otherwise owner's forward.
+        /// Returns the direction to aim.
+        /// Priority: currentTarget (if set) → playerCamera (if assigned) → owner's forward.
+        /// Also applies eye‑height offset if shooting at a target.
         /// </summary>
         private Vector3 GetAimDirection()
         {
+            // If we have a target, aim at its position (with optional height offset)
+            if (currentTarget != null)
+            {
+                // Use owner's eye position (height 1.6f) as requested
+                Vector3 eyePos = owner != null ? owner.transform.position + Vector3.up * 1.6f : firePoint.position;
+                Vector3 targetPos = currentTarget.transform.position + Vector3.up * 1.6f; // aim at eye level
+                return (targetPos - eyePos).normalized;
+            }
+
+            // Player aiming via camera
             if (playerCamera != null)
                 return playerCamera.transform.forward;
 
+            // Fallback to owner's forward
             if (owner != null)
                 return owner.transform.forward;
 
-            // Fallback to firePoint's forward (should not happen)
+            // Ultimate fallback
             return firePoint.forward;
         }
 
@@ -191,7 +213,6 @@ namespace AniDrag.WeaponPack
             if (projectilesPerShot <= 1 || spreadAngle <= 0)
                 return baseDirection;
 
-            // Generate random spread within cone
             float randomX = Random.Range(-spreadAngle, spreadAngle);
             float randomY = Random.Range(-spreadAngle, spreadAngle);
             Quaternion spreadRot = Quaternion.Euler(randomY, randomX, 0);
@@ -217,13 +238,9 @@ namespace AniDrag.WeaponPack
 
         #endregion
 
-        #region Ammo Helpers (optional)
+        #region Ammo Helpers
 
-        public void AddAmmo(int amount)
-        {
-            totalRemainingAmmo += amount;
-        }
-
+        public void AddAmmo(int amount) => totalRemainingAmmo += amount;
         public int GetCurrentMagazineAmmo() => currentAmmoInMag;
         public int GetTotalRemainingAmmo() => totalRemainingAmmo;
 

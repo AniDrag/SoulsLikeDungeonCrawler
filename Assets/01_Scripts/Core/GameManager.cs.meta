@@ -5,7 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - cameraSettings: {fileID: 11400000, guid: b6cf7044597f12f4b98568d6dadc887b, type: 2}
-  - PlayerPrefab: {fileID: 4099444404827016700, guid: 0456c142d1330304ab5ccd8b2df80f62, type: 3}
+  - PlayerPrefab: {fileID: 2084965406829876185, guid: af32972e17c38d1469cf45af86ed1b8f, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
