@@ -11,7 +11,7 @@ namespace AniDrag.CharacterComponents
     /// They contain basic information like name, class, stats, and health.
     /// Would be marked as abstract if this woould have been only a blueprint for other entities but some enteties might use this directly.
     /// </summary>
-    public class Entity : MonoBehaviour
+    public class Entity : MonoBehaviour // mybe interace IStatBlock here ?
     {
         [Header("========================\n" +
       "    Primitive Refrences      \n" +

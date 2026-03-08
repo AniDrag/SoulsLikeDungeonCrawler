@@ -38,6 +38,11 @@ namespace AniDrag.WeaponPack
                 damagable?.TakeDamage(damage);
             }
         }
+        public override void Aim(bool isPressed = true)
+        {
+            // Implement aiming logic (e.g., zoom in, change crosshair, etc.)
+            Debug.Log("Aiming...");
+        }
         public override void Reload(bool isPressed = true)
         {
             int ammoNeeded = magazineCapacity - currentAmmo;

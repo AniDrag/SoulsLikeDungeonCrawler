@@ -9,10 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8faa8555cf8da9948adc36ab35b66255, type: 3}
-  m_Name: CameraSettings
-  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.Player.CameraSettings
-  SensitivityHorizontal: 2
-  SensitivityVertical: 2
-  FOV: 60
-  isInMenu: 0
+  m_Script: {fileID: 11500000, guid: 46809353b01e90f4abdbf0bf3660ffea, type: 3}
+  m_Name: New Melee Combat Strategy
+  m_EditorClassIdentifier: Assembly-CSharp::AniDrag.AI.MeleeCombatStrategy
+  attackRange: 2
+  attackCooldown: 1.5

@@ -3,37 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 namespace AniDrag.WeaponPack
 {
-    /* ignore this jsut an idea, ok Dowe?
-    > concept. recive weapon gameobject. 
-    > extract animator controller
-    > extract weaponCore component type
-    > use controll skeme type 
-        I. Mele weappon:
-            - stwohanded,
-            - 2 swords,
-            - sword and shild,
-            - charged weapons
-
-        II. Ranged weapon:
-            - chaged weapons
-            - charge with aim
-            - ranged raytracing
-            - ranged physical
-
-    > purpous of this? 
-        Controll weapon actions universily.
-        Integration with Equipment manager
-        Integration with Item ID ssytem
-
-    > Containing Conectores?
-        - Using weapon
-        - Mod weaponStats.
-
-     */
-
-    
-
-
+   
     [RequireComponent(typeof(PlayerInput))]
     public class WeaponsController : MonoBehaviour
     {

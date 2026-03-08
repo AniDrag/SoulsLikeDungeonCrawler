@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using AniDrag.Utility;
 using AniDrag.Core;
+using UnityEngine.UI;
 namespace AniDrag.CharacterComponents
 {
    
@@ -14,8 +15,8 @@ namespace AniDrag.CharacterComponents
     public class HealthComponent : MonoBehaviour, IDamagable
     {
         [Header("========================\n" +
-      "    Debug      \n" +
-      "========================")]
+                "    Debug      \n" +
+                "========================")]
         [SerializeField] private bool HAS_CHARACTER_COMPONENT = false;
         [SerializeField] private bool USE_SHILD = false;
         [SerializeField] private bool USE_REGENERATION = false;
@@ -46,6 +47,8 @@ namespace AniDrag.CharacterComponents
       "    Event Connectors      \n" +
       "========================")]
         public UnityEvent onDeath;
+        public UnityEvent<int> onHealthChange;
+
 
 
         // ------------------------------------------------------------------------------------------------------------------
@@ -76,6 +79,7 @@ namespace AniDrag.CharacterComponents
             currentShield = maxShield;
             healtRegen = maxHealth / 100;// 1% of max health per heal
             TryStartRegen();
+            onHealthChange?.Invoke(currentHealth);
         }
         public void InitializeHealthComponent(Stats data, int level)
         {
@@ -86,6 +90,7 @@ namespace AniDrag.CharacterComponents
             currentShield = maxShield;
             healtRegen = maxHealth / 100;// 1% of max health per heal
             TryStartRegen();
+            onHealthChange?.Invoke(currentHealth);
         }
 
         void Start()
@@ -118,6 +123,7 @@ namespace AniDrag.CharacterComponents
             if (amount <= 0) amount = maxHealth / 100;
             currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
             onHealthChanged?.Invoke(this);
+            onHealthChange?.Invoke(currentHealth);
         }
         public void RegenerateShield(int amount)
         {
@@ -146,6 +152,7 @@ namespace AniDrag.CharacterComponents
             }
 
             onHealthChanged?.Invoke(this);
+            onHealthChange?.Invoke(currentHealth);
 
             // Restart regen monitoring
             TryStartRegen();
@@ -169,6 +176,7 @@ namespace AniDrag.CharacterComponents
             healtRegen = maxHealth / 100;// 1% of max health per heal
             // Notify the UI about health and shield changes
             onHealthChanged?.Invoke(this);
+            onHealthChange?.Invoke(currentHealth);
         }
         public void UpdateHealth(Stats data, int level)
         {
@@ -182,6 +190,7 @@ namespace AniDrag.CharacterComponents
             healtRegen = maxHealth / 100;// 1% of max health per heal
             // Notify the UI about health and shield changes
             onHealthChanged?.Invoke(this);
+            onHealthChange?.Invoke(currentHealth);
         }
 
         #endregion
