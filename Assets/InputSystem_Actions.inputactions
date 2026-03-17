@@ -77,6 +77,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Dash",
+                    "type": "Button",
+                    "id": "1a74ffe7-cff0-4474-a59d-d0d14e4aa387",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -398,6 +407,17 @@
                     "action": "Crouch",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "eb85f686-0460-45f0-964b-257462d8527a",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Dash",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -517,6 +537,15 @@
                     "name": "Inventory",
                     "type": "Button",
                     "id": "f6f22384-486b-46f3-a645-ecf881cf04db",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleQuestPanel",
+                    "type": "Button",
+                    "id": "6b9d223d-5b34-4826-ba29-f4fbdb0aad99",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -983,6 +1012,17 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "Inventory",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "045937f3-9c00-4a65-8ef0-30b7055e1ec3",
+                    "path": "<Keyboard>/k",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "ToggleQuestPanel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
