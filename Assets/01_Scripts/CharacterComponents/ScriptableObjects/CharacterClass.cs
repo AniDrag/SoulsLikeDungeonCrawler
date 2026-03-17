@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using AniDrag.Core;
 namespace AniDrag.CharacterComponents {
     /// <summary>
     /// This ScriptableObject defines a character class with base stats and growth factors.
