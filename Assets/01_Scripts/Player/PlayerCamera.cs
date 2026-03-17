@@ -1,112 +1,90 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using AniDrag.Core;
+
 namespace AniDrag.Player
 {
-    /// <summary>
-    /// PlayerCamera handles first-person camera control for the player.
-    /// 
-    /// Responsibilities:
-    /// - Reads mouse/gamepad input for camera rotation (look direction).
-    /// - Applies vertical rotation (pitch) to the camera and horizontal rotation (yaw) to the player body.
-    /// - Clamps vertical rotation to prevent camera from flipping.
-    /// - Optionally applies smooth Field of View (FOV) changes from CameraSettings.
-    /// - Locks and hides the cursor for FPS-style control.
-    /// </summary>
     public class PlayerCamera : MonoBehaviour
     {
-        [Header("========================\n" +
-       "    References      \n" +
-       "========================")]
-        [Tooltip("The Camera component used for rendering the player's view.")]
-        [SerializeField] private Camera playerCam;
-        [Tooltip("The PlayerInput component for reading mouse/gamepad inputs.")]
-        [SerializeField] private PlayerInput inputs;
-        [Tooltip("Camera settings containing FOV and sensitivity.")]
-        [SerializeField] private CameraSettings settings;
-        [Tooltip("Transform representing the player's orientation (used for yaw rotation).")]
-        [SerializeField] private Transform playerOrientation;
-        [Tooltip("Transform that the camera should follow for position tracking.")]
-        [SerializeField] private Transform camTrackPosition;
+        [Header("References")]
+        [SerializeField] private Camera _playerCam;
+        [SerializeField] private Transform _playerOrientation;
+        [SerializeField] private Transform _cameraTrackPosition;
+        [SerializeField] private CameraSettings _settings;
 
-        [Header("========================\n" +
-      "    Sensitivity      \n" +
-      "========================")]
-        [Tooltip("Base horizontal sensitivity multiplier.")]
-        [SerializeField] private float baseHorizontalSensitivity = 1f;
-        [Tooltip("Base vertical sensitivity multiplier.")]
-        [SerializeField] private float baseVerticalSensitivity = 1f;
+        [Header("Sensitivity")]
+        [SerializeField] private float _baseHorizontalSensitivity = 1f;
+        [SerializeField] private float _baseVerticalSensitivity = 1f;
 
-        [Header("========================\n" +
-     "    Clamp      \n" +
-     "========================")]
-        [Tooltip("Maximum angle the camera can look up/down from horizontal (degrees).")]
-        [SerializeField, Range(0, 90f)] private float verticalClamp = 85f;
+        [Header("Clamp")]
+        [SerializeField] private float _verticalClamp = 85f;
 
-        private float xRotation; // Current vertical rotation (pitch)
-        private float yRotation; // Current horizontal rotation (yaw)
-        private Vector2 lookDirection; // Input from mouse/gamepad
+        private float _xRotation;
+        private float _yRotation;
+        private bool _cameraEnabled = true;
+        private int _invertFactor = 1;
 
-        /// <summary>
-        /// Initialize camera references, field of view, and lock cursor for FPS control.
-        /// </summary>
         private void Start()
         {
-            // Assign main camera if none specified
-            if (playerCam == null)
-                playerCam = Camera.main;
+            if (_playerCam == null)
+                _playerCam = Camera.main;
 
-            // Set initial FOV from settings
-            if (settings != null)
-                playerCam.fieldOfView = settings.FOV;
-
-            // Lock and hide the cursor for FPS-style camera control
-            //Cursor.lockState = CursorLockMode.Locked;
-            //Cursor.visible = false;
+            if (_settings != null)
+                _playerCam.fieldOfView = _settings.FOV;
         }
 
-        /// <summary>
-        /// Updates camera rotation and position each frame.
-        /// Handles input, clamping, and smooth FOV updates.
-        /// </summary>
+        private void OnEnable()
+        {
+            Services.GameState.OnCameraControlAllowedChanged += SetCameraEnabled;
+        }
+
+        private void OnDisable()
+        {
+            Services.GameState.OnCameraControlAllowedChanged -= SetCameraEnabled;
+        }
+
         private void Update()
         {
-            if (inputs.actions["EnableMouse"].IsPressed())
-            { 
-                //Debug.Log("Mouse enabled");
-                settings.EnableCursor();
-            }
-            else if (inputs.actions["EnableMouse"].WasReleasedThisFrame())
-            {
-                //ebug.Log("Mouse Dissable");
-                settings.DisableCursor();
-            }
+            UpdatePosition();
 
-            // Match camera position to tracking transform
-            playerCam.transform.position = camTrackPosition.position;
-                       
-
-            if (settings.isInMenu)
+            if (!_cameraEnabled)
             {
-                if (Mathf.Abs(playerCam.fieldOfView - settings.FOV) > 0.01f)
-                    playerCam.fieldOfView = Mathf.Lerp(playerCam.fieldOfView, settings.FOV, Time.deltaTime * 5f);
+                UpdateSettingsWhileDisabled();
                 return;
             }
-                        
-            lookDirection = inputs.actions["Look"].ReadValue<Vector2>();
-            if (lookDirection == Vector2.zero) return; // Skip if no input
 
-            
-            yRotation += lookDirection.x * baseHorizontalSensitivity * Time.deltaTime * settings.SensitivityHorizontal;
-            xRotation -= lookDirection.y * baseVerticalSensitivity * Time.deltaTime * settings.SensitivityVertical;
+            Vector2 lookInput = Services.Input.LookInput;
+            if (lookInput == Vector2.zero) return;
 
-            xRotation = Mathf.Clamp(xRotation, -verticalClamp, verticalClamp);
-
-            playerCam.transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f);
-
-            if (playerOrientation != null)
-                playerOrientation.rotation = Quaternion.Euler(0f, yRotation, 0f);
-
+            ApplyRotation(lookInput);
         }
+
+        private void UpdatePosition()
+        {
+            if (_cameraTrackPosition != null)
+                _playerCam.transform.position = _cameraTrackPosition.position;
+        }
+
+        private void UpdateSettingsWhileDisabled()
+        {
+            if (_settings != null && Mathf.Abs(_playerCam.fieldOfView - _settings.FOV) > 0.01f)
+                _playerCam.fieldOfView = Mathf.Lerp(_playerCam.fieldOfView, _settings.FOV, Time.deltaTime * 5f);
+
+            _invertFactor = _settings.InvertVertical ? -1 : 1;
+        }
+
+        private void ApplyRotation(Vector2 lookInput)
+        {
+            _yRotation += lookInput.x * _baseHorizontalSensitivity * Time.deltaTime * _settings.SensitivityHorizontal * _invertFactor;
+            _xRotation -= lookInput.y * _baseVerticalSensitivity * Time.deltaTime * _settings.SensitivityVertical;
+
+            _xRotation = Mathf.Clamp(_xRotation, -_verticalClamp, _verticalClamp);
+
+            _playerCam.transform.localRotation = Quaternion.Euler(_xRotation, _yRotation, 0f);
+
+            if (_playerOrientation != null)
+                _playerOrientation.rotation = Quaternion.Euler(0f, _yRotation, 0f);
+        }
+
+        private void SetCameraEnabled(bool enabled) => _cameraEnabled = enabled;
     }
 }

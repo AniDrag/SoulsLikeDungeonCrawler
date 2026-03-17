@@ -1,534 +1,347 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
-using AniDrag.CharacterComponents;
 using AniDrag.Core;
-using System.Runtime.InteropServices.WindowsRuntime;
+
 namespace AniDrag.Player
 {
-    /// <summary>
-    /// Central controller for all player movement behavior.
-    /// 
-    /// Handles:
-    /// - Input polling via the Unity Input System.
-    /// - Movement state management (Idle, Walking, Running, etc.) through PlayerStateMachine.
-    /// - Physics-based movement and environmental checks (ground, slope, water).
-    /// - Smoothing acceleration/deceleration and clamping velocity.
-    /// - Coyote time and input buffering for smoother controls.
-    /// - Events for dash, slide, and jump that states can subscribe to.
-    /// 
-    /// Works with Unity's Rigidbody system. 
-    /// Replace Rigidbody API with custom wrappers if your project uses modified physics.
-    /// </summary>
-
-    [RequireComponent(typeof(Collider))]
-    [RequireComponent(typeof(Rigidbody))]
-    [RequireComponent(typeof(PlayerInput))]
-    
     public class PlayerMovementController : FSM
     {
-        //All Animation names pertating to player movement state machine
-        #region Animation Hashes
-        [field: SerializeField] public string Run = "WalkRun";
-        [field: SerializeField] public string Jump = "Jump";
-        [field: SerializeField] public string Falling = "Falling";
-        [field: SerializeField] public string Crouch = "Crouching";
-        [field: SerializeField] public string Dash = "Dashing";
-        [field: SerializeField] public string Slide = "Sliding";
-        [field: SerializeField] public string Swim = "Swiming";
-        #endregion
-        public enum MovementProfile
-        {
-            None,       // movement disabled
-            Grounded,   // normal walking/running
-            Airborne,   // reduced control
-            Swimming,   // water movement
-            Sliding     // momentum-based
-        }
-        #region === References ===
-        [Header("========================\n" +
-       "     Refrences      \n" +
-       "========================")]
-        [SerializeField] private CameraSettings cameraSettings;
-        [Tooltip("The Rigidbody used for physics movement.")]
-        [SerializeField] private Rigidbody body; public Rigidbody Body => body;
-        [Tooltip("The PlayerInput component (new Input System).")]
-        [SerializeField] private PlayerInput input; public PlayerInput Inputs => input;
-        [Tooltip("Orientation transform used to convert local move vectors into world-space (usually player root).")]
-        [SerializeField] private Transform orientation; public Transform Orientation => orientation;
-        [Tooltip("Player Stats on the same object, used to determine movement speed and reaction timings.")]
-        [SerializeField] private PlayerEntity playerStats;
-        [Tooltip("Lowest point on player for water detection.")]
-        [SerializeField] private Transform waterCheckTransform;
-        [Tooltip("Waist height transform used to check ground contact.")]
-        [SerializeField] private Transform groundCheckTransform;
+        // Animation parameter names
+        [field: SerializeField] public string Run { get; private set; } = "WalkRun";
+        [field: SerializeField] public string Jump { get; private set; } = "Jump";
+        [field: SerializeField] public string FallingString { get; private set; } = "Falling";
+        [field: SerializeField] public string Crouch { get; private set; } = "Crouching";
+        [field: SerializeField] public string Dash { get; private set; } = "Dashing";
+        [field: SerializeField] public string Slide { get; private set; } = "Sliding";
+        [field: SerializeField] public string Swim { get; private set; } = "Swiming";
+
+        public enum MovementProfile { None, Grounded, Airborne, Swimming, Sliding }
+
+        #region References
+        [Header("References")]
+        [SerializeField] private Rigidbody _body;
+        [SerializeField] private Transform _orientation;
+        [SerializeField] private Transform _groundCheck;
+        [SerializeField] private Transform _waterCheck;
+        [SerializeField] private CameraSettings _cameraSettings; // optional
         #endregion
 
-        #region === Movement Settings ===
-        [Header("========================\n" +
-       "    Movement Settings      \n" +
-       "========================")]
-        [field:SerializeField] public float arealSpeed { get; private set; } = 1f;
-        [Tooltip("Walking speed in meters per second.")]
-        [field:SerializeField] public float walkSpeed { get; private set; } = 5f;
-        [Tooltip("Running/sprinting speed in meters per second.")]
-        [field: SerializeField] public float runSpeed { get; private set; } = 10f; 
-        [Tooltip("Crouch movement speed in meters per second.")]
-        [field:SerializeField] public float crouchSpeed { get; private set; } = 1f; 
-        [Tooltip("Initial speed when sliding starts.")]
-        [field:SerializeField] public float slideSpeed { get; private set; } = 13f; 
-        [Tooltip("Force applied when performing a dash (impulse).")]
-        [field:SerializeField] public float dashForce { get; private set; } = 20f; 
-        [Tooltip("Upward impulse applied during jump.")]
-        [field:SerializeField] public float jumpForce { get; private set; } = 7f;
+        #region Movement Settings
+        [Header("Movement Settings")]
+        [SerializeField] private float _walkSpeed = 5f;
+        [SerializeField] private float _runSpeed = 10f;
+        [SerializeField] private float _crouchSpeed = 2f;
+        [SerializeField] private float _airControl = 0.7f;
+        [SerializeField] private float _acceleration = 10f;
+        [SerializeField] private float _deceleration = 8f;
+        [SerializeField] private float _jumpForce = 7f;
+        [SerializeField] private float _gravity = 9.8f;
 
-        [Header("========================\n" +
-       "    Debug Settings      \n" +
-       "========================")]
-        [Tooltip("Current smoothed speed used for animation blending.")]
-        [field:SerializeField] public float currentSpeed { get; private set; } = 0f; 
-        [Tooltip("Current vertical (Y) velocity for animation or logic checks.")]
-        [field:SerializeField] public float yVelocity { get; private set; } = 0f;
-        // Internal timers (negative values are fine — act as expired)
+        public float WalkSpeed => _walkSpeed;
+        public float RunSpeed => _runSpeed;
+        public float JumpForce => _jumpForce;
+        public float Gravity => _gravity;
+        #endregion
+
+        #region Audio
+        [Header("Audio")]
+        [SerializeField] private AudioSource _movementAudioSource;
+        [SerializeField] private AudioClip[] _footstepClips;
+        [SerializeField] private AudioClip _jumpClip;
+        [SerializeField] private AudioClip _landClip;
+        [SerializeField] private float _footstepInterval = 0.5f;
+
+        private float _footstepTimer;
+        private bool _wasGroundedLastFrame;
+        #endregion
+
+        #region Environment
+        [Header("Environment")]
+        [SerializeField] private LayerMask _groundMask;
+        [SerializeField] private LayerMask _waterMask;
+        [SerializeField] private float _groundCheckRadius = 0.4f;
+        [SerializeField] private float _waterCheckRadius = 0.5f;
+        [SerializeField] private float _maxSlopeAngle = 50f;
+
+        [Header("Debug")]
+        [SerializeField] private bool _isGrounded;
+        [SerializeField] private bool _inWater;
+        [SerializeField] private bool _onSlope;
+        [SerializeField] private float _currentSpeed;
+        [SerializeField] private float _targetSpeed;
+        #endregion
+
+        #region Timers
+        [Header("Timers")]
+        [SerializeField] private float _jumpBufferTime = 0.12f;
+        [SerializeField] private float _dashBufferTime = 0.12f;
+        [SerializeField] private float _slideBufferTime = 0.12f;
+
         private float _jumpBufferTimer;
-        private float _coyoteTimer;
+        private float _dashBufferTimer;
         private float _slideBufferTimer;
         private float _slideCooldownTimer;
-        private float _dashBufferTimer;
         private float _dashCooldownTimer;
-        
-        #region === Input Cache ===
-        public Vector2 moveInput { get; private set; }
-        public Vector3 moveDirection { get; private set; }
-        public bool toggleType { get; private set; } // if an input is toggle or hold type this helps states decide what to do when we let go og said button example running or crouching.
         #endregion
 
-        [Header("========================\n" +
-       "    Speed tinkering      \n" +
-       "========================")]
-        [Tooltip("Acceleration smoothing factor — higher = faster response.")]
-        [SerializeField] private float _acceleration = 10f; 
-        [Tooltip("Deceleration smoothing factor — higher = stops quicker.")]
-        [SerializeField] private float _deceleration = 8f;
-        [Tooltip("Control factor applied when in air! currentAcceleration * 0.9f - 0.2f.")]
-        [SerializeField, Range(0.9f, 0.1f)] private float _inAirControlFactor = 0.7f;
-        #endregion
-        #region === Environment Settings ===
-        [Header("=== Ground - Slope - Water Settings ===")]
-        [Tooltip("Custom gravity value applied to the player.")]
-        [SerializeField, Range(1f, 10f)] private float gravity = 9.8f; public float Gravity => gravity;
-        [Tooltip("Drag value when grounded.")]
-        [SerializeField, Range(0.01f, 1f)] private float groundDrag = 6f;
-        [Tooltip("Drag value when in air.")]
-        [SerializeField, Range(0.01f, 1f)] private float airDrag = 6f;
-        [Tooltip("Drag value when underwater.")]
-        [SerializeField, Range(0.01f, 1f)] private float waterDrag = 6f;
-        [Tooltip("Drag value applied during sliding.")]
-        [SerializeField, Range(0.01f, 1f)] private float slidingDrag = 6f;
-        [Space]
-        [Tooltip("Maximum slope angle the player can stand/walk on.")]
-        [SerializeField, Range(20, 80)] private float maxSlopeAngle = 50f;
-        [Tooltip("Cached slope hit data from raycast.")]
-        [SerializeField] private RaycastHit _slopeHit;
-        [Space]
-        [Tooltip("Radius of sphere used for ground detection.")]
-        [SerializeField, Range(0.01f, 1f)] private float groundCheckRadius = 0.4f;
-        [Tooltip("Radius of sphere used for water detection.")]
-        [SerializeField, Range(0.01f, 1f)] private float waterCheckRadius = 0.5f;
-        [SerializeField] public bool onSlope { get; private set; }
-        [SerializeField] public bool inAir { get; private set; }
-        [SerializeField] public bool inWater { get; private set; }
-        [SerializeField] public bool isGrounded { get; private set; }
-        [Space]
-        [Tooltip("Layer mask for ground detection.")]
-        public LayerMask groundMask;
-        [Tooltip("Layer mask for water detection.")]
-        public LayerMask waterMask;
-        #endregion
-        #region === Timers and Buffers ===
-        [Header("========================\n" +
-       "    Grounding check Helpers      \n" +
-       "========================")]
-        [Tooltip("Coyote time allows jump shortly after leaving ground.")]
-        [SerializeField] private float coyoteTime = 0.12f;
-        [Tooltip("Jump buffering time window before landing.")]
-        [SerializeField] private float jumpBufferTime = 0.12f;
-        [Tooltip("Slide input buffer duration.")]
-        [SerializeField] private float slideBufferTime = 0.12f;
-        [Tooltip("Cooldown between slides.")]
-        [SerializeField] private float slideCooldownTime = 0.5f;
-        [Tooltip("Dash input buffer duration.")]
-        [SerializeField] private float dashBufferTime = 0.12f;
-        [Tooltip("Cooldown between dashes.")]
-        [SerializeField] private float dashCooldownTime = 1.0f;
+        // Public properties for states
+        public Rigidbody Body => _body;
+        public Transform Orientation => _orientation;
+        public float CurrentYSpeed => _body.linearVelocity.y;
+        public bool IsGrounded => _isGrounded;
+        public bool InWater => _inWater;
+        public bool OnSlope => _onSlope;
+        public Vector2 MoveInput { get; private set; }
+        public Vector3 MoveDirection { get; private set; }
+        public bool SprintHeld => Services.Input.SprintHeld;
+        public bool JumpPressed => Services.Input.JumpPressed;
+        public bool CrouchHeld => Services.Input.CrouchHeld;
+        public bool DashPressed => Services.Input.DashPressed;
+        public bool NoInput => MoveInput.sqrMagnitude < 0.1f;
 
+        // States
+        public PlayerIdleState Idle { get; private set; }
+        public PlayerWalkingState Walking { get; private set; }
+        public PlayerRunningState Running { get; private set; }
+        public PlayerJumpingState Jumping { get; private set; }
+        public PlayerFallingState Falling { get; private set; }
 
-        #region === Movement Runtime State ===
-        [Header("========================\n" +
-       "    Debug stuff to see      \n" +
-       "========================")]
-        [SerializeField] private MovementProfile currentProfile = MovementProfile.Grounded;
-        [SerializeField] private float targetSpeed = 10;
-        [SerializeField] private bool movementEnabled = true;
-        [SerializeField] private float targetLinearDamping;
-        [SerializeField] private float dampingLerpSpeed = 5f;
-        [SerializeField] private float _currentAcceleration;
-        public float yvelocity = 0;
+        private RaycastHit _slopeHit;
+        private MovementProfile _currentProfile = MovementProfile.Grounded;
+        private float _currentAcceleration;
+        private bool _movementEnabled = true;
 
-        #endregion
-        #endregion
-
-        #region === State Machine References ===
-        // ------------------------------------------------------------------------------------------------------------------
-        // States  ----------------------------------------------------------------------------------------------------------
-        // ------------------------------------------------------------------------------------------------------------------
-        public PlayerIdleState idle { get; private set; }
-        public PlayerWalkingState walking { get; private set; }
-        public PlayerRunningState running { get; private set; }
-        public PlayerJumpingState jumping { get; private set; }
-        public PlayerFallingState falling { get; private set; }
-        //public PlayerIdleState crouching { get; private set; }
-        //public PlayerIdleState sliding { get; private set; }
-        //public PlayerIdleState dashing { get; private set; }
-        #endregion
-        #region === Unity Events ===
         private void OnValidate()
         {
-            // Auto-assign dependencies when component is first added
-            body = GetComponent<Rigidbody>();
-            playerStats = GetComponent<PlayerEntity>();
-            input = GetComponent<PlayerInput>();
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                switch (transform.GetChild(i).name )
-                {
-                    case "Orientation":
-                        orientation = transform.GetChild(i);
-                        break;
-                    case "GroundCheck":
-                        groundCheckTransform = transform.GetChild(i);
-                        break;
-                    case "WaterCheck":
-                        waterCheckTransform = transform.GetChild(i);
-                        break;
-                }
-            }
+            if (_body == null) _body = GetComponent<Rigidbody>();
+            if (_orientation == null) _orientation = transform.Find("Orientation");
+            if (_groundCheck == null) _groundCheck = transform.Find("GroundCheck");
+            if (_waterCheck == null) _waterCheck = transform.Find("WaterCheck");
         }
 
         private void Awake()
         {
             SetupFSM();
+            Idle = new PlayerIdleState(this, animator);
+            Walking = new PlayerWalkingState(this, animator);
+            Running = new PlayerRunningState(this, animator);
+            Jumping = new PlayerJumpingState(this, animator);
+            Falling = new PlayerFallingState(this, animator);
 
-            SetMovementProfile(MovementProfile.Grounded);
+            Idle.TransitionSetup();
+            Walking.TransitionSetup();
+            Running.TransitionSetup();
+            Jumping.TransitionSetup();
+            Falling.TransitionSetup();
 
-            idle = new PlayerIdleState(this, animator);
-            walking = new PlayerWalkingState(this, animator);
-            running = new PlayerRunningState(this, animator);
-            jumping = new PlayerJumpingState(this, animator);
-            falling = new PlayerFallingState(this, animator);
-
-            idle.TransitionSetup();
-            walking.TransitionSetup();
-            running.TransitionSetup();
-            jumping.TransitionSetup();
-            falling.TransitionSetup();
-
-            SetState(idle);
+            SetState(Idle);
+            _wasGroundedLastFrame = _isGrounded;
         }
+
+       private void OnEnable()
+       {
+           Services.GameState.OnMovementAllowedChanged += SetMovementEnabled;
+       }
+       
+       private void OnDisable()
+       {
+           Services.GameState.OnMovementAllowedChanged -= SetMovementEnabled;
+       }
+
 
         protected override void Update()
         {
-            Direction();
-            Timers();
+            if (!_movementEnabled) return;
+            UpdateMoveInput();
+            UpdateTimers();
+            HandleFootsteps();
             base.Update();
-            yvelocity = body.linearVelocity.y;
         }
+
         protected override void FixedUpdate()
         {
-           //if (cameraSettings.isInMenu)return;
-            EnvironmentCheck();
-            //ApplyMovement();
-
+            if (!_movementEnabled) return;
+            CheckEnvironment();
+            ApplyMovement();
+            DetectLanding();
             base.FixedUpdate();
         }
-        #endregion
 
-        #region === Input handling ===
-
-        /// <summary>
-        /// Polls player input and calculates the intended movement direction.
-        /// Projects input to world-space based on camera/player orientation.
-        /// Slope projection is applied if standing on a slope.
-        /// </summary>
-        private void Direction()
+        private void UpdateMoveInput()
         {
-            if (input == null || input.actions == null) return;
+            MoveInput = Services.Input.MoveInput;
+            MoveInput = Vector2.ClampMagnitude(MoveInput, 1f);
 
-            moveInput = input.actions["Move"].ReadValue<Vector2>();
-            moveInput = Vector2.ClampMagnitude(moveInput, 1f); // Better than Normalize()
-
-            if (orientation == null) return;
-
-            Vector3 rawDir = moveInput.x * orientation.right + moveInput.y * orientation.forward;
-            rawDir.Normalize();
-            moveDirection = onSlope ? GetSlopeMoveDirection(rawDir) : rawDir;
+            if (_orientation != null)
+            {
+                Vector3 raw = MoveInput.x * _orientation.right + MoveInput.y * _orientation.forward;
+                raw.Normalize();
+                MoveDirection = _onSlope ? GetSlopeMoveDirection(raw) : raw;
+            }
         }
-        /// <summary>
-        /// Projects a direction along the slope plane.
-        /// Ensures the player moves along the slope surface rather than clipping through or flying off.
-        /// </summary>
-        Vector3 GetSlopeMoveDirection(Vector3 moveDir)
+
+        private Vector3 GetSlopeMoveDirection(Vector3 moveDir)
         {
-            // Project the desired movement onto the slope's plane using the cached slope normal
             return Vector3.ProjectOnPlane(moveDir, _slopeHit.normal).normalized;
         }
-        #endregion
 
-        #region === Velocity Manipulation && Environment ===
-        private void EnvironmentCheck()
+        private void CheckEnvironment()
         {
-            // While feet tuch ground we are grounded so in shallow water we are grounded, when it reaches neare the head we are in in water and swiming.
-            inWater = Physics.CheckSphere(waterCheckTransform.position, waterCheckRadius, waterMask); // shold be a raycast up from feet to head and get the chracter height and se if w are swiming or not. also if we hit the water plane we are in water.
-            isGrounded = !inWater && Physics.CheckSphere(groundCheckTransform.position, groundCheckRadius, groundMask);
-            onSlope = false;
-            if(isGrounded)
+            _inWater = Physics.CheckSphere(_waterCheck.position, _waterCheckRadius, _waterMask);
+            _isGrounded = !_inWater && Physics.CheckSphere(_groundCheck.position, _groundCheckRadius, _groundMask);
+            _onSlope = false;
+
+            if (_isGrounded)
             {
-                // Buffer Timers here when on ground
-                onSlope = OnSlopeCheck();
-                body.useGravity = true;
-                targetLinearDamping = groundDrag;
+                _onSlope = OnSlopeCheck();
+                _body.linearDamping = 6f; // ground drag
             }
-            else if (inWater)
+            else if (_inWater)
             {
-                body.useGravity = false;
-                targetLinearDamping = waterDrag;
+                _body.useGravity = false;
+                _body.linearDamping = 4f; // water drag
             }
             else
             {
-                body.useGravity = true;
-                targetLinearDamping = airDrag;
+                _body.useGravity = true;
+                _body.linearDamping = 2f; // air drag
             }
-
-            LinearDampingLerping();
         }
 
-        bool OnSlopeCheck()
+        private bool OnSlopeCheck()
         {
-            if (Physics.Raycast(groundCheckTransform.position, Vector3.down, out _slopeHit, 0.1f))
+            if (Physics.Raycast(_groundCheck.position, Vector3.down, out _slopeHit, 0.1f))
             {
                 float angle = Vector3.Angle(Vector3.up, _slopeHit.normal);
-                return angle < maxSlopeAngle && angle != 0f;
+                return angle < _maxSlopeAngle && angle != 0f;
             }
             return false;
         }
 
-        //Lerps the linear damping to target value for smooth transitions and less jarring movement
-        void LinearDampingLerping()
-        {
-            if (Mathf.Abs(body.linearDamping - targetLinearDamping) <= 0.01f)
-            {
-                if(body.linearDamping != targetLinearDamping)// Prevent unnecessary assignments
-                    body.linearDamping = targetLinearDamping;
-
-                return;
-            }
-
-            body.linearDamping = Mathf.Lerp(
-                body.linearDamping,
-                targetLinearDamping,
-                dampingLerpSpeed * Time.fixedDeltaTime
-            );
-        }
-
-        /// <summary>
-        /// Ensures horizontal movement does not exceed the intended speed.
-        /// Does not affect vertical velocity (jump/fall).
-        /// </summary>
-        public void ClampVelocity()
-        {
-            Vector3 flatVel = new Vector3(Body.linearVelocity.x, 0, Body.linearVelocity.z);
-            if (flatVel.magnitude > targetSpeed)
-            {
-                Vector2 limitedVelocity = flatVel.normalized * targetSpeed;
-                body.linearVelocity = new Vector3(limitedVelocity.x, body.linearVelocity.y, limitedVelocity.y);
-            }
-        }
-        #endregion
-
-        #region === Movement Application ===
-        public void HandleAcceleration()
-        {
-            if (Body == null) return;
-            //else if(targetSpeed == 0)
-            //{ 
-            //    ClampVelocity(); 
-            //    return; 
-            //}
-
-            Vector3 targetVelocity = new Vector3(moveDirection.x * targetSpeed, Body.linearVelocity.y, moveDirection.z * targetSpeed);
-            Body.linearVelocity = Vector3.Lerp(
-                Body.linearVelocity,
-                targetVelocity,
-                _currentAcceleration * Time.fixedDeltaTime
-            );
-        }
-        /// <summary>
-        /// Applies Rigidbody velocity according to the current move direction and speed.
-        /// Handles:
-        /// - Slope alignment
-        /// - Smooth acceleration and deceleration
-        /// - Reduced mid-air control
-        /// - Horizontal velocity clamping
-        /// </summary>
         public void ApplyMovement()
         {
-            GetAcceleration();
-            HandleAcceleration();
-            // 5. Clamp horizontal speed
-            //ClampVelocity();
+            UpdateTargetSpeed();
+            UpdateAcceleration();
+            Vector3 targetVelocity = new Vector3(MoveDirection.x * _targetSpeed, _body.linearVelocity.y, MoveDirection.z * _targetSpeed);
+            _body.linearVelocity = Vector3.Lerp(_body.linearVelocity, targetVelocity, _currentAcceleration * Time.fixedDeltaTime);
         }
-        public void GetAcceleration()
+
+        private void UpdateTargetSpeed()
         {
-            
-            _currentAcceleration = (targetSpeed > GetCurrentSpeed())
-                          ? _acceleration
-                          : _deceleration;
-            if (inAir)
-                _currentAcceleration *= _inAirControlFactor;
-            else if (targetSpeed == 0 && !isGrounded)
+            switch (_currentProfile)
             {
-                _currentAcceleration = 20;
-                return;
+                case MovementProfile.Grounded:
+                    _targetSpeed = SprintHeld ? _runSpeed : _walkSpeed;
+                    break;
+                case MovementProfile.Airborne:
+                    _targetSpeed = _walkSpeed; // reduced control handled by acceleration factor
+                    break;
+                case MovementProfile.Swimming:
+                    _targetSpeed = _walkSpeed * 0.5f;
+                    break;
+                case MovementProfile.Sliding:
+                    // speed decays over time
+                    break;
+                default:
+                    _targetSpeed = 0;
+                    break;
             }
         }
 
-        float GetCurrentSpeed()
+        private void UpdateAcceleration()
         {
-            Vector3 flatVel = new Vector3(Body.linearVelocity.x, 0, Body.linearVelocity.z);
-            return flatVel.magnitude;
+            float flatSpeed = new Vector3(_body.linearVelocity.x, 0, _body.linearVelocity.z).magnitude;
+            _currentAcceleration = (_targetSpeed > flatSpeed) ? _acceleration : _deceleration;
+            if (!_isGrounded)
+                _currentAcceleration *= _airControl;
         }
 
+        #region Public API for States
+        public void SetMovementProfile(MovementProfile profile) => _currentProfile = profile;
+        public void SetTargetSpeed(float speed) => _targetSpeed = speed;
+        public void SetMovementEnabled(bool enabled)
+        {
+            Debug.Log($"Movement allowed changed to {enabled}");
+            _movementEnabled = enabled;
+            if (!enabled)
+                _body.linearVelocity = new Vector3(0, _body.linearVelocity.y, 0);
+        }
+        public void RequestJump() => _jumpBufferTimer = _jumpBufferTime;
+        public bool CanJump() => _jumpBufferTimer > 0f && _isGrounded && !_inWater;
+        public void RequestDash() => _dashBufferTimer = _dashBufferTime;
+        public bool CanDash() => _dashBufferTimer > 0f && _dashCooldownTimer <= 0f;
+        public void RequestSlide() => _slideBufferTimer = _slideBufferTime;
+        public bool CanSlide() => _isGrounded && !_inWater && _slideCooldownTimer <= 0f && !NoInput && _slideBufferTimer > 0f;
+
+        // Called by JumpingState when jump is performed
+        public void PlayJumpSound()
+        {
+            if (_movementAudioSource != null && _jumpClip != null)
+                _movementAudioSource.PlayOneShot(_jumpClip);
+        }
         #endregion
 
-        #region === Buffer Timers ===
-        /// <summary>
-        /// Updates all action timers (jump, dash, slide).
-        /// </summary>
-        void Timers()
-        {
-            JumpBufferTimers();
-            DashBufferTimers();
-            SliderBufferTimers();
-        }
-
-        // Jump timing logic
-        public void RequestJump() => _jumpBufferTimer = jumpBufferTime;
-        public bool CanJump() => (_jumpBufferTimer > 0f) && (isGrounded || _coyoteTimer > 0f) && !inWater;
-        public void JumpBufferTimers()
+        private void UpdateTimers()
         {
             _jumpBufferTimer -= Time.deltaTime;
-            _coyoteTimer -= Time.deltaTime;
-        }
-
-        // Dash timing logic
-        public void RequestDash() => _dashBufferTimer = dashBufferTime;
-        public bool CanDash() => !inWater && (_dashBufferTimer > 0f) && (_dashCooldownTimer <= 0f);
-        public void DashBufferTimers()
-        {
             _dashBufferTimer -= Time.deltaTime;
-            _dashCooldownTimer -= Time.deltaTime;
-        }
-
-        // Slide timing logic
-        public void RequestSlide() => _slideBufferTimer = slideBufferTime;
-        public bool CanSlide()
-        {
-            if (!isGrounded || inWater || _slideCooldownTimer > 0 || NoInputDetected()) return false;
-            return _slideBufferTimer > 0f;
-        }
-        public void SliderBufferTimers()
-        {
             _slideBufferTimer -= Time.deltaTime;
+            _dashCooldownTimer -= Time.deltaTime;
             _slideCooldownTimer -= Time.deltaTime;
         }
 
-        // Input state helper
-        public bool NoInputDetected() => moveInput.magnitude < 0.1f;
-        #endregion
-
-        #region === Misc Helpers ===
-        /// <summary>
-        /// Handles transitions into crouch from any state when input is pressed.
-        /// </summary>
-        public void AnyState()
+        #region Audio
+        private void HandleFootsteps()
         {
-            //if (Inputs.actions["Crouch"].IsPressed() && stateMC.currentState != crouching)
-            //    stateMC.ChangeState(crouching);
-            //else if (Inputs.actions["Dash"].IsPressed())
-            //{
-            //    RequestDash();
-            //    if (CanDash())
-            //    {
-            //        stateMC.ChangeState(dashing);
-            //    }
-            //}
-        }
-        #endregion
-
-        #region === Movement API (Called by States) ===
-
-        /// <summary>
-        /// Enables or disables all movement completely.
-        /// Used for inventory, cutscenes, dialogue, stun, etc.
-        /// </summary>
-        public void SetMovementEnabled(bool enabled)
-        {
-            movementEnabled = enabled;
-
-            if (!enabled)
+            if (!_isGrounded || _inWater || NoInput)
             {
-                // Immediately kill horizontal velocity
-                Body.linearVelocity = new Vector3(0, Body.linearVelocity.y, 0);
+                _footstepTimer = 0f;
+                return;
+            }
+
+            float currentSpeed = new Vector3(_body.linearVelocity.x, 0, _body.linearVelocity.z).magnitude;
+            if (currentSpeed < 0.1f) return;
+
+            _footstepTimer -= Time.deltaTime;
+            if (_footstepTimer <= 0f)
+            {
+                PlayFootstepSound();
+                // Adjust interval based on speed
+                float speedFactor = Mathf.Clamp01(currentSpeed / _runSpeed);
+                _footstepTimer = _footstepInterval / Mathf.Max(0.5f, speedFactor);
             }
         }
 
-        /// <summary>
-        /// Sets how movement behaves (grounded, air, swimming, sliding).
-        /// </summary>
-        public void SetMovementProfile(MovementProfile profile)
+        private void PlayFootstepSound()
         {
-            currentProfile = profile;
+            if (_movementAudioSource == null || _footstepClips.Length == 0) return;
+            AudioClip clip = _footstepClips[Random.Range(0, _footstepClips.Length)];
+            _movementAudioSource.PlayOneShot(clip);
         }
 
-        /// <summary>
-        /// Sets the desired movement speed (walk, run, crouch, swim).
-        /// </summary>
-        public void SetTargetSpeed(float speed)
+        private void DetectLanding()
         {
-            targetSpeed = speed;
+            if (!_wasGroundedLastFrame && _isGrounded)
+            {
+                // Landed
+                if (_movementAudioSource != null && _landClip != null)
+                    _movementAudioSource.PlayOneShot(_landClip);
+            }
+            _wasGroundedLastFrame = _isGrounded;
         }
-
         #endregion
-        #region === Gizmos ===
+
         private void OnDrawGizmosSelected()
         {
-            if (groundCheckTransform != null)
+            if (_groundCheck)
             {
-                Gizmos.color = isGrounded ? Color.green : Color.red;
-                Gizmos.DrawWireSphere(groundCheckTransform.position, groundCheckRadius);
+                Gizmos.color = _isGrounded ? Color.green : Color.red;
+                Gizmos.DrawWireSphere(_groundCheck.position, _groundCheckRadius);
             }
-
-            if (waterCheckTransform != null)
+            if (_waterCheck)
             {
-                Gizmos.color = inWater ? Color.blue : Color.cyan;
-                Gizmos.DrawWireSphere(waterCheckTransform.position, waterCheckRadius);
-            }
-
-            if (Application.isPlaying)
-            {
-                Gizmos.color = Color.cyan;
-                Gizmos.DrawLine(transform.position, transform.position + moveDirection * 2f);
+                Gizmos.color = _inWater ? Color.blue : Color.cyan;
+                Gizmos.DrawWireSphere(_waterCheck.position, _waterCheckRadius);
             }
         }
-        #endregion
     }
 }

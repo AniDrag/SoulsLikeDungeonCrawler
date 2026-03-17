@@ -5,70 +5,54 @@ namespace AniDrag.Player
 {
     public class PlayerJumpingState : BaseState<PlayerMovementController>
     {
+        private float _minFallVelocity = -0.1f;
+        private bool _hasStartedFalling;
+
         public PlayerJumpingState(PlayerMovementController controller, Animator animator)
-        : base(controller, animator) { }
-
-        private float minFallVelocity = -0.1f; // Slightly larger threshold
-        private bool hasStartedFalling = false;
-
+            : base(controller, animator) { }
 
         public override string StateName() => "Jumping";
-        public override void OnEnter() {
+
+        public override void OnEnter()
+        {
             controller.SetMovementProfile(PlayerMovementController.MovementProfile.Airborne);
-            hasStartedFalling = false;
-            //Debug.Log($"[Jump] Entered Jumping state");
+            _hasStartedFalling = false;
 
-            // --- CALCULATE CONSISTENT JUMP ---
-            float jumpVelocity = Mathf.Sqrt(2f * controller.Gravity * controller.jumpForce); // height in meters
-            Vector3 resetVel = new Vector3(controller.Body.linearVelocity.x, 0, controller.Body.linearVelocity.z); // reset for consistent jump height
+            // Calculate jump velocity
+            float jumpVelocity = Mathf.Sqrt(2f * controller.Gravity * controller.JumpForce);
+            Vector3 currentVel = controller.Body.linearVelocity;
+            currentVel.y = 0; // reset Y
+            controller.Body.linearVelocity = currentVel;
+            currentVel.y = jumpVelocity;
+            controller.Body.linearVelocity = currentVel;
 
-            // --- FORWARD MOMENTUM BOOST BASED ON PREVIOUS STATE ---
-            // float forwardBoost = 0f;
-            // if (stateMachine.oldState == player.walking) forwardBoost = .07f;
-            // else if (stateMachine.oldState == player.running) forwardBoost = .1f;
-            // else if (stateMachine.oldState == player.sliding) forwardBoost = .15f;
-
-
-            // Apply final velocity to Rigidbody
-            controller.Body.linearVelocity = resetVel;//reset Y velocity to 0.
-            resetVel.y = jumpVelocity; // set jump velocity to resetVel
-            controller.Body.linearVelocity = resetVel;
-            // player.Body.AddForce(player.moveDirection * forwardBoost, ForceMode.Impulse);
-            controller.SetTargetSpeed(controller.walkSpeed);
-            controller.GetAcceleration();
-
-            //Debug.Log($"[Jump] Jump initiated | vY={jumpVelocity:F2}");
+            controller.SetTargetSpeed(controller.WalkSpeed);
         }
-        public override void OnUpdate() {
-            if (controller.Body.linearVelocity.y < minFallVelocity)
-            {
-                hasStartedFalling = true;
-            }
+
+        public override void OnUpdate()
+        {
+            if (controller.Body.linearVelocity.y < _minFallVelocity)
+                _hasStartedFalling = true;
         }
-        public override void OnFixedUpdate() { controller.ApplyMovement(); }
+
+        public override void OnFixedUpdate()
+        {
+            controller.ApplyMovement();
+        }
+
         public override void OnExit() { }
+
         public override void TransitionSetup()
         {
-            controller.AddTransition(this, controller.falling, new FuncPredicate(Falling));
-            controller.AddTransition(this, controller.idle, new FuncPredicate(Idle));
-            controller.AddTransition(this, controller.walking, new FuncPredicate(Walking));
-            controller.AddTransition(this, controller.running, new FuncPredicate(Running));
+            controller.AddTransition(this, controller.Falling, new FuncPredicate(Falling));
+            controller.AddTransition(this, controller.Idle, new FuncPredicate(Idle));
+            controller.AddTransition(this, controller.Walking, new FuncPredicate(Walking));
+            controller.AddTransition(this, controller.Running, new FuncPredicate(Running));
         }
-        bool Falling()
-        {
-            return hasStartedFalling && !controller.isGrounded;// .03f to avoid micro transitions and is a good buffer value 
-        }
-        bool Idle()
-        {
-            return controller.isGrounded && !Walking();
-        }
-        bool Walking()
-        {
-            return controller.moveInput.sqrMagnitude > 0.1f;
-        }
-        bool Running()
-        {
-            return controller.Inputs.actions["Sprint"].IsPressed() && Walking();
-        }
+
+        private bool Falling() => _hasStartedFalling && !controller.IsGrounded;
+        private bool Idle() => controller.IsGrounded && controller.MoveInput.sqrMagnitude <= 0.1f;
+        private bool Walking() => controller.IsGrounded && controller.MoveInput.sqrMagnitude > 0.1f && !controller.SprintHeld;
+        private bool Running() => controller.IsGrounded && controller.SprintHeld;
     }
 }
