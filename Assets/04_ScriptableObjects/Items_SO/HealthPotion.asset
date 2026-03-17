@@ -9,28 +9,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01300151155d7b3499eeda06d49ee9d0, type: 3}
+  m_Script: {fileID: 11500000, guid: 35a72fe521924352a88e044289f4ca47, type: 3}
   m_Name: HealthPotion
   m_EditorClassIdentifier: Assembly-CSharp::AniDrag.InventoryAndItems.HealthPotion
-  IDitem: HealthPotion
-  itemName: HealthPoton
+  itemName: HP potion
   itemType: 2
   rarity: 0
-  description: 
+  description: Heals You
   icon: {fileID: 0}
   worldPrefab: {fileID: 0}
   isStackable: 1
-  maxStack: 25
+  maxStack: 20
   isUnique: 0
-  baseValue: 50
-  weight: 20
+  baseValue: 10
+  weight: 0.1
+  effectType: 1
+  effectValue: 10
+  effectDuration: 0
   isNegative: 0
-  effect: 1
-  effectValue: 20
-  effectTime: 0
-  stats:
-    VIT: 1
-    STR: 1
-    DEX: 1
-    INT: 1
-  equipmentType: 0

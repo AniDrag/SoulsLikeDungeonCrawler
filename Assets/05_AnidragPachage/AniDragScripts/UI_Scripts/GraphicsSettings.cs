@@ -1,30 +1,33 @@
 using System;
 using UnityEngine;
-public class Graphics : MonoBehaviour
+[CreateAssetMenu(fileName = "Graphics Settings", menuName = "Settings/Graphics Settings")]
+public class GraphicsSettings : ScriptableObject
 {
-
-    int _rezolutionX = 1920;
-    int _rezolutionY = 1080;
+    [Header("Resolution")]
+    public int resolutionX = 1920;
+    public int resolutionY = 1080;
+    public FullScreenMode fullScreenMode = FullScreenMode.FullScreenWindow;
     Resolution[] resolutions;
+
+    [Header("Quality")]
+    public int shadowQuality = 2; // 0=Low,1=Medium,2=High
+    public bool vSync = true;
+    public int targetFPS = 60;
+
 
     //bool _fullScreen = false;
     //int _fps = 60;
-    FullScreenMode _moceScreen;
+    FullScreenMode screenResizingMode;
     private void Awake()
     {
         resolutions = Screen.resolutions;
-        _moceScreen = Screen.fullScreenMode;
+        screenResizingMode = Screen.fullScreenMode;
     }
     #region Other math 
     void AutomaticSceenRezolution()
     {
-        _rezolutionX = Screen.width;
-        _rezolutionY = Screen.height;
-    }
-
-    public void SetFOV(float value)
-    {
-        Camera.main.fieldOfView = value;
+        resolutionX = Screen.width;
+        resolutionY = Screen.height;
     }
 
     #endregion
@@ -38,27 +41,27 @@ public class Graphics : MonoBehaviour
                 AutomaticSceenRezolution();
                 break;
             case 1:
-                _rezolutionX = 1920;
-                _rezolutionX = 1080;
+                resolutionX = 1920;
+                resolutionX = 1080;
                 break;
             case 2:
-                _rezolutionX = 1366;
-                _rezolutionX = 768;
+                resolutionX = 1366;
+                resolutionX = 768;
                 break;
             case 3:
-                _rezolutionX = 1536;
-                _rezolutionX = 864;
+                resolutionX = 1536;
+                resolutionX = 864;
                 break;
             case 4:
-                _rezolutionX = 1280;
-                _rezolutionX = 720;
+                resolutionX = 1280;
+                resolutionX = 720;
                 break;
             case 5:
-                _rezolutionX = 1440;
-                _rezolutionX = 900;
+                resolutionX = 1440;
+                resolutionX = 900;
                 break;
         }
-        Screen.SetResolution(_rezolutionX, _rezolutionY, _moceScreen);
+        Screen.SetResolution(resolutionX, resolutionY, screenResizingMode);
 
     }
     public void SETT_DisplayModeSetting(int index)
@@ -66,13 +69,13 @@ public class Graphics : MonoBehaviour
         switch (index)
         {
             default:
-                _moceScreen = FullScreenMode.ExclusiveFullScreen; break;
+                screenResizingMode = FullScreenMode.ExclusiveFullScreen; break;
             case 1:
-                _moceScreen = FullScreenMode.FullScreenWindow; break;
+                screenResizingMode = FullScreenMode.FullScreenWindow; break;
             case 2:
-                _moceScreen = FullScreenMode.Windowed; break;
+                screenResizingMode = FullScreenMode.Windowed; break;
         }
-        Screen.fullScreenMode = _moceScreen;
+        Screen.fullScreenMode = screenResizingMode;
     }
     public void SETT_FPS(float index)
     {
@@ -81,11 +84,6 @@ public class Graphics : MonoBehaviour
         else
             Application.targetFrameRate = (int)index; // set to frame rate
     }
-    void SETT_FOV()
-    {
-
-    }
-
     void SETT_TextureQuality()
     {
 

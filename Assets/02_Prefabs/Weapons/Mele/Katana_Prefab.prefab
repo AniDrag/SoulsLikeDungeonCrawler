@@ -69,19 +69,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AniDrag.WeaponPack.MeleeWeapon
   inputType: 0
-  weponAnimator: {fileID: 1106959202163540227}
-  owner: {fileID: 0}
-  attack: Attack
-  combo: ComboStep
-  altAttack: AltAttack
-  holster: HolsterAction
-  enableAttack: CanAttack
-  comboWindowDuration: 0.5
+  weaponAnimator: {fileID: 1106959202163540227}
+  attackTrigger: Attack
+  comboInteger: ComboStep
+  blockBool: Blocking
+  holsterBool: Holstered
+  maxComboSteps: 3
+  comboResetTime: 0.5
   lightRecoveryTime: 0.2
   heavyRecoveryTime: 0.8
-  maxChainAttacks: 2
   baseDamage: 50
-  targetLayers:
+  hitLayers:
     serializedVersion: 2
     m_Bits: 64
   hitPoints:
@@ -96,9 +94,7 @@ MonoBehaviour:
   - {fileID: 9158922664862028079}
   - {fileID: 2723612592055978255}
   hitRadius: 0.07
-  hitGizmoDuration: 1
-  enableGizmos: 1
-  constantShowHitColliders: 1
+  damageStatMultiplier: 2
 --- !u!1001 &3158083925385870546
 PrefabInstance:
   m_ObjectHideFlags: 0

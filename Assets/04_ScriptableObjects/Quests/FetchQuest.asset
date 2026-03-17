@@ -9,16 +9,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 630b8a236c463bf4dab6f935cd529238, type: 3}
-  m_Name: FechQUest
+  m_Script: {fileID: 11500000, guid: dd68bb9bcf714c98a255cfc731723332, type: 3}
+  m_Name: FetchQuest
   m_EditorClassIdentifier: Assembly-CSharp::AniDrag.Quest.Quest
-  questID: 6
-  questName: Shiny purple rocks
-  description: 
+  questID: F5bbdb197-cf3f-447c-95ea-4a1e43228c4f
+  questName: FetchQuest
+  description: Get 5 gems
   objectives:
-  - objectiveID: 1
-    description: Find a suspicious rock, they are purple in color.
+  - objectiveID: Gem
+    description: 
     type: 0
     requiredAmount: 5
     currentAmount: 0
     targetName: Gem
+  rewards: []
+  nextQuest: {fileID: 0}

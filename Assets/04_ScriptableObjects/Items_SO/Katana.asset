@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e5cd2c6c7f338c42bd707846b6c933e, type: 3}
   m_Name: Katana
   m_EditorClassIdentifier: Assembly-CSharp::EquipmentItem
-  IDitem: Katana
-  itemName: Katana
+  itemName: UchiKatana
   itemType: 1
   rarity: 1
   description: A starter weapon, keep it safe its the only weapon for now.
@@ -24,14 +23,10 @@ MonoBehaviour:
   isUnique: 0
   baseValue: 200
   weight: 1.1
-  isNegative: 0
-  effect: 0
-  effectValue: 0
-  effectTime: 0
-  baseDamage: 35
-  stats:
-    VIT: 3
-    STR: 5
-    DEX: 4
-    INT: 3
   equipmentType: 6
+  equipmentStats:
+    VIT: 3
+    STR: 3
+    DEX: 2
+    INT: 1
+  baseDamage: 35

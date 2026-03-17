@@ -4006,7 +4006,6 @@ GameObject:
   - component: {fileID: 4853234885372933007}
   - component: {fileID: 5754081341876029081}
   - component: {fileID: 7298749926218689230}
-  - component: {fileID: 3151974173456107951}
   m_Layer: 5
   m_Name: Canvas-Settings
   m_TagString: Untagged
@@ -4055,7 +4054,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_TargetDisplay: 0
 --- !u!114 &5754081341876029081
 MonoBehaviour:
@@ -4069,10 +4068,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -4097,32 +4096,6 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &3151974173456107951
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8858496552983503070}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2140c4d2521b7f428b0046f5600b642, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SettingsUI
-  inputs: {fileID: 0}
-  settingsUI: {fileID: 2968498132156124714}
-  masterMixer: {fileID: 24300002, guid: ec28b034d02a32c4d842d7b8b76fc36d, type: 2}
-  musicMixer: {fileID: 24300002, guid: d062d21c6925e934693469e5473f90fe, type: 2}
-  uiMixer: {fileID: 24300002, guid: 70b57e4862ddc27409062f008090b93c, type: 2}
-  masterMixerSlider: {fileID: 1659847153607451347}
-  musicMixerSlider: {fileID: 4605084830527464024}
-  uiMixerSlider: {fileID: 4282650679394325161}
-  MainMenu: {fileID: 4362972304182180667}
-  Restart: {fileID: 721309395906721896}
-  verticalSens: {fileID: 1212942129934619719}
-  horizontalSens: {fileID: 8383480495470572861}
-  fovSlider: {fileID: 174338662990433041}
-  cameraSettings: {fileID: 11400000, guid: b6cf7044597f12f4b98568d6dadc887b, type: 2}
 --- !u!1001 &426281843412762010
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4235,10 +4208,6 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 8261272685265127992, guid: 955b25c6a4b8b294caf3e0069b6d69d1, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 3151974173456107951}
     - target: {fileID: 8261272685265127992, guid: 955b25c6a4b8b294caf3e0069b6d69d1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
@@ -4366,17 +4335,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 955b25c6a4b8b294caf3e0069b6d69d1, type: 3}
---- !u!114 &4362972304182180667 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8261272685265127992, guid: 955b25c6a4b8b294caf3e0069b6d69d1, type: 3}
-  m_PrefabInstance: {fileID: 5632186248429367555}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!224 &4473519443940213142 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8087525633785393301, guid: 955b25c6a4b8b294caf3e0069b6d69d1, type: 3}
@@ -4488,14 +4446,3 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8087525633785393301, guid: 955b25c6a4b8b294caf3e0069b6d69d1, type: 3}
   m_PrefabInstance: {fileID: 8694045897844486736}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &721309395906721896 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8261272685265127992, guid: 955b25c6a4b8b294caf3e0069b6d69d1, type: 3}
-  m_PrefabInstance: {fileID: 8694045897844486736}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
