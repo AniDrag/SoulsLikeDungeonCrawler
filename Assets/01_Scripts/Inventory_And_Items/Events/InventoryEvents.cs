@@ -1,6 +1,6 @@
 using System;
 using AniDrag.Core;
-namespace AniDrag.InventoryAndItems
+namespace AniDrag.Inventory
 {
     public class EventBus_Inventory<T> where T : InventoryEvent
     {
