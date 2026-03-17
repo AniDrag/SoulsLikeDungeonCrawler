@@ -10,104 +10,90 @@ namespace AniDrag.Quest
         [SerializeField] private GameObject questEntryPrefab;
         [SerializeField] private GameObject objectiveTextPrefab;
 
-        public List<Quest> testQuest;
-        public int testQuestAmount;
-        private List<QuestProgress> _quests = new();
+        private QuestManager _playerQuestManager;
         private Dictionary<QuestProgress, GameObject> _entryByProgress = new();
 
-
-        void Start()
+        private void Start()
         {
-            foreach (Quest quest in testQuest)
+            
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+                _playerQuestManager = player.GetComponent<QuestManager>();
+
+            if (_playerQuestManager == null)
             {
-                // Debug quest spawning
-                for (int i = 0; i < testQuestAmount; i++)
-                {
-                    CreateQuest(new QuestProgress(quest));
-                }
+                Debug.LogError("QuestUIExample: No QuestManager found on player.");
+                return;
             }
+            if (_playerQuestManager != null)
+                _playerQuestManager.OnQuestAdded += AddQuestToUI;
         }
 
-        /// <summary>
-        /// Setting values for the quest. 
-        /// </summary>
-        /// <param name="entry"> quest GO </param>
-        /// <param name="quest"> quest progress </param>
-        void CreateQuest(QuestProgress quest)
+        public void AddQuestToUI(QuestProgress progress)
         {
-            // Spawn the quest and save a reference
-            _quests.Add(quest);
-            var entry = Instantiate(questEntryPrefab, questListContent);
-            _entryByProgress[quest] = entry;
-            TMP_Text questNameText = entry.transform.Find("QuestNameText").GetComponent<TMP_Text>();
-            questNameText.text = quest.quest.questName;
+            if (_entryByProgress.ContainsKey(progress)) return;
 
-            // Spawn all objectives of this quest
+            GameObject entry = Instantiate(questEntryPrefab, questListContent);
+            _entryByProgress[progress] = entry;
+
+            TMP_Text questNameText = entry.transform.Find("QuestNameText").GetComponent<TMP_Text>();
+            questNameText.text = progress.Quest.questName;
+
             Transform objectiveList = entry.transform.Find("ObjectiveList");
-            foreach (var objective in quest.objectives)
+            foreach (var objective in progress.Objectives)
             {
                 GameObject go = Instantiate(objectiveTextPrefab, objectiveList);
                 go.name = objective.objectiveID;
             }
-            UpdateAllObjectives(entry, quest);
-            quest.OnUpdated += HandleQuestUpdated;
+
+            UpdateAllObjectives(entry, progress);
+            progress.OnUpdated += HandleQuestUpdated;
         }
 
-        /// <summary>
-        /// Updates existing quest values.
-        /// </summary>
-        /// <param name="entry"></param>
-        /// <param name="quest"></param>
-        void UpdateQuest(GameObject entry, QuestProgress quest)
-        {
-            //Debug.Log($"Update entry called");
-            TMP_Text questNameText = entry.transform.Find("QuestNameText").GetComponent<TMP_Text>();
-            if (quest.IsCompleted)
-            {
-                //Debug.Log("QUEST COMPLETED");
-                questNameText.text = quest.quest.questName + " DONE";
-                questNameText.color = Color.green;
-                UpdateAllObjectives(entry, quest);
-                quest.OnUpdated -= HandleQuestUpdated;
-                return;
-            }
-            UpdateAllObjectives(entry, quest);
-        }
-
-        void UpdateAllObjectives(GameObject entry, QuestProgress quest)
+        private void UpdateAllObjectives(GameObject entry, QuestProgress progress)
         {
             Transform objectiveList = entry.transform.Find("ObjectiveList");
-            foreach (var objective in quest.objectives)
+            foreach (var objective in progress.Objectives)
             {
                 Transform child = objectiveList.Find(objective.objectiveID);
+                if (child == null) continue;
+
                 TMP_Text objText = child.GetComponent<TMP_Text>();
                 if (!objective.IsCompleted)
-                { // description + progress
+                {
                     objText.text = $"{objective.description} ({objective.currentAmount} / {objective.requiredAmount})";
                 }
                 else
-                { // Mark the description as done
+                {
                     objText.text = $"{objective.description} DONE";
                     objText.color = Color.green;
                 }
             }
         }
 
-        /// <summary>
-        /// Call this from Quest itself to update the UI
-        /// </summary>
-        /// <param name="progress"> the quest</param>
-        void HandleQuestUpdated(QuestProgress progress)
+        private void HandleQuestUpdated(QuestProgress progress)
         {
-            if (!_entryByProgress.TryGetValue(progress, out var entry)) return;
-            UpdateQuest(entry, progress);
+            if (_entryByProgress.TryGetValue(progress, out var entry))
+            {
+                UpdateAllObjectives(entry, progress);
+                if (progress.IsCompleted)
+                {
+                    
+                    TMP_Text questNameText = entry.transform.Find("QuestNameText").GetComponent<TMP_Text>();
+                    questNameText.text = progress.Quest.questName + " DONE";
+                    questNameText.color = Color.green;
+                }
+            }
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
-            foreach (var progress in _entryByProgress.Keys)
+            if (_playerQuestManager != null)
+                _playerQuestManager.OnQuestAdded -= AddQuestToUI;
+            
+            foreach (var kvp in _entryByProgress)
             {
-                progress.OnUpdated -= HandleQuestUpdated;
+                kvp.Key.OnUpdated -= HandleQuestUpdated;
             }
             _entryByProgress.Clear();
         }

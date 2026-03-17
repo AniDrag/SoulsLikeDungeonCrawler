@@ -2,6 +2,27 @@ using AniDrag.Core;
 using UnityEngine;
 namespace AniDrag.WeaponPack
 {
+    /*
+     Projectile has its own damage value and lifetime.
+    It can be used for various types of ranged weapons (guns, bows, magic spells, etc.).
+    it should know what layer to hit. well better to just ignore its owner object and hit everything else, that way it can be used for both player and enemy projectiles without needing separate layers.
+
+    so variables:
+        - Damage amount
+        - Lifetime (time before auto?destroy)
+        - boince count (optional, for projectiles that can bounce)
+        - mass.
+        - Destroy on impact (bool)
+        - Impact effect (optional prefab to spawn on hit)  
+        - owner (the GameObject that fired the projectile, used to ignore collisions and for XP attribution)
+        - rigidbody reference (for physics-based movement, optional if you want to use transform-based movement instead) and then turn kinematic on impact if we want it to.
+        - spawn time (to track lifetime)
+        - explosionRadius (optional, for explosive projectiles that damage in an area on impact)
+        - dawmage falloff (optional, for projectiles that deal less damage the farther they travel or from the explosion center)
+     
+     
+     
+     */
 
     /// <summary>
     /// A projectile that can be fired by a weapon.
@@ -9,29 +30,33 @@ namespace AniDrag.WeaponPack
     /// - Tracks the owner (who shot it).
     /// - Self?destructs after impact or lifetime.
     /// </summary>
-    [RequireComponent(typeof(Rigidbody))]
+      [RequireComponent(typeof(Rigidbody))]
     public class Projectile : MonoBehaviour
     {
         [Header("Damage")]
-        [SerializeField] private int damage = 10;
+        public int damage = 10;
 
         [Header("Lifetime")]
-        [SerializeField] private float maxLifetime = 5f;          // Auto?destroy after this time
-        [SerializeField] private bool destroyOnImpact = true;      // Destroy immediately upon hitting something
-        [SerializeField] private float impactDestroyDelay = 0f;    // Optional delay before destruction
+        [SerializeField] private float maxLifetime = 5f;
+        [SerializeField] private bool destroyOnImpact = true;
+        [SerializeField] private float impactDestroyDelay = 0f;
 
         [Header("Effects")]
-        [SerializeField] private GameObject impactEffectPrefab;    // Optional visual effect on hit
+        [SerializeField] private GameObject impactEffectPrefab;
 
-        // Public property to set the owner (the GameObject that fired this projectile)
+        [Header("Collision & Behaviour")]
+        [SerializeField] private LayerMask hitLayers = -1;
+        [SerializeField] private bool friendlyFire = false;
+        [SerializeField] private bool stickToEnvironment = true;
+        [SerializeField] private float stickDuration = 4f;
+
         public GameObject Owner { get; set; }
+        public int TeamId { get; set; } = -1; // -1 = neutral
 
         private Rigidbody rb;
         private float spawnTime;
-        public void Initialize(GameObject owner)
-        {
-            Owner = owner;
-        }
+        private bool hasImpacted = false;
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
@@ -40,9 +65,20 @@ namespace AniDrag.WeaponPack
 
         private void Update()
         {
-            // Auto?destroy after maxLifetime
-            if (Time.time - spawnTime > maxLifetime)
+            if (!hasImpacted && Time.time - spawnTime > maxLifetime)
                 Destroy(gameObject);
+        }
+
+        public void Initialize(GameObject owner, int teamId = -1)
+        {
+            Owner = owner;
+            TeamId = teamId;
+        }
+
+        public void SetVelocity(Vector3 velocity)
+        {
+            if (rb != null)
+                rb.linearVelocity = velocity;
         }
 
         private void OnTriggerEnter(Collider other)
@@ -57,41 +93,56 @@ namespace AniDrag.WeaponPack
 
         private void HandleImpact(Collider other)
         {
-            // Ignore the owner of the projectile
+            if (hasImpacted) return;
+
+            // Ignore owner
             if (Owner != null && other.gameObject == Owner)
                 return;
 
-            // Try to damage the object
-            IDamagable damagable = other.GetComponent<IDamagable>();
+            // Check layer mask
+            if (!IsInLayerMask(other.gameObject.layer, hitLayers))
+                return;
+
+            // Team filtering
+            if (!friendlyFire)
+            {
+                var teamIdentifier = other.GetComponent<ITeamIdentifier>();
+                if (teamIdentifier != null && teamIdentifier.TeamId == TeamId && TeamId != -1)
+                    return;
+            }
+
+            hasImpacted = true;
+
+            var damagable = other.GetComponent<IDamagable>();
             if (damagable != null)
-            {
                 damagable.TakeDamage(damage, Owner);
-                // (Optional) If you want to give XP on kill, you could check here if the object died,
-                // but that would require a more complex system (e.g., death event). For simplicity,
-                // we leave XP to be handled elsewhere.
-            }
 
-            // Spawn impact effect
             if (impactEffectPrefab != null)
-            {
                 Instantiate(impactEffectPrefab, transform.position, Quaternion.identity);
-            }
 
-            // Destroy projectile (with optional delay)
-            if (destroyOnImpact)
-            {
-                if (impactDestroyDelay > 0f)
-                    Destroy(gameObject, impactDestroyDelay);
-                else
-                    Destroy(gameObject);
-            }
+            if (damagable == null && stickToEnvironment)
+                StickToSurface(other.transform);
+            else if (destroyOnImpact)
+                Destroy(gameObject, impactDestroyDelay);
         }
 
-        // Optional: set initial velocity (called by weapon when spawning)
-        public void SetVelocity(Vector3 velocity)
+        private void StickToSurface(Transform parent)
         {
-            if (rb != null)
-                rb.linearVelocity = velocity;
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            transform.SetParent(parent);
+
+            Collider col = GetComponent<Collider>();
+            if (col != null) col.enabled = false;
+
+            Destroy(gameObject, stickDuration);
+        }
+
+        private bool IsInLayerMask(int layer, LayerMask layermask)
+        {
+            return (layermask.value & (1 << layer)) != 0;
         }
     }
 }

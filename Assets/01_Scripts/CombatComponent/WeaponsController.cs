@@ -1,190 +1,163 @@
 using AniDrag.Core;
-using AniDrag.Utility;
 using UnityEngine;
-using UnityEngine.InputSystem;
+
 namespace AniDrag.WeaponPack
 {
-   
-    [RequireComponent(typeof(PlayerInput))]
+    public enum WeaponInputType
+    {
+        Melee,
+        Ranged
+    }
+
     public class WeaponsController : MonoBehaviour
     {
-        [Header("References")]
-        private WeaponCore currentWeapon;
-        [SerializeField] private Transform HandL;
-        [SerializeField] private Transform HandR;
-        [SerializeField] private Camera camera;// Player camera // zoom in thats it
-        [SerializeField] private PlayerInput inputs;
+        [Header("Weapon Attach Points")]
+        [SerializeField] private Transform _rightHand;
+        [SerializeField] private Transform _leftHand;
 
+        [Header("Debug (Optional)")]
+        [SerializeField] private GameObject _debugStarterWeapon;
 
-        [Header("Input action names [MELE]")]
-        [SerializeField] private string attack = "Attack";
-        [SerializeField] private string altAttack = "AltAttack";
-        [SerializeField] private string block = "Block";
+        private IEquipmentUser _equipmentUser;
+        private IWeapon _currentWeapon;
+        private GameObject _currentWeaponObject;
+        private WeaponInputType _currentWeaponType;
+        private bool _holstered = false;
 
-        [Header("Input action names [RANGED]")]
-        [SerializeField] private string fire = "Fire";
-        [SerializeField] private string altFire = "AltFire";
-        [SerializeField] private string reload = "Reload";
-        [SerializeField] private string aim = "Aim";
-
-        [Header("Input action names [GENERAL COMBAT]")]
-        [SerializeField] private string holster = "Holster";
-
-        [Header("Debug variables")]
-        [SerializeField] private GameObject Debug_StarterWeapon;
-
-        private bool holstered = false;
         private void Awake()
         {
-            camera = Camera.main;
-            if(inputs == null)  
-                inputs = GetComponent<PlayerInput>();
+            _equipmentUser = GetComponent<IEquipmentUser>();
+            if (_equipmentUser == null)
+                Debug.LogError("WeaponsController requires an IEquipmentUser component on the same GameObject.");
         }
+
+        private void OnEnable()
+        {
+            if (_equipmentUser != null)
+                _equipmentUser.OnEquipmentChanged += HandleEquipmentChanged;
+        }
+
+        private void OnDisable()
+        {
+            if (_equipmentUser != null)
+                _equipmentUser.OnEquipmentChanged -= HandleEquipmentChanged;
+        }
+
+        private void Start()
+        {
+            
+            if (_debugStarterWeapon != null)
+            {
+                EquipWeaponPrefab(_debugStarterWeapon);
+            }
+            else
+            {
+                var equipped = _equipmentUser?.GetEquipped(EquipmentType.MainWeapon);
+                if (equipped != null)
+                    EquipFromIEquippable(equipped);
+            }
+        }
+
         private void Update()
         {
-            if(currentWeapon == null || GameManager.Instance.cameraSettings.isInMenu) return;
-            
-            switch (currentWeapon.inputType)
+            if (Services.Input.HolsterPressed)
+                ToggleHolster();
+
+            if (_currentWeapon == null || _holstered) return;
+
+            switch (_currentWeaponType)
             {
                 case WeaponInputType.Melee:
-                    MeleInputMap();
+                    // One‑shot attacks
+                    if (Services.Input.AttackPressed)
+                        _currentWeapon.Attack(true);
+                    if (Services.Input.AltAttackPressed)
+                        _currentWeapon.AltAttack(true);
+                    // Block is hold
+                    _currentWeapon.Block(Services.Input.BlockHeld);
                     break;
+
                 case WeaponInputType.Ranged:
-                    RangedInputMap();
+                    // One‑shot fire
+                    if (Services.Input.FirePressed)
+                        _currentWeapon.Attack(true);
+                    if (Services.Input.AltFirePressed)
+                        _currentWeapon.AltAttack(true);
+                    // Aim is hold
+                    _currentWeapon.Aim(Services.Input.AimHeld);
+                    // Reload one‑shot
+                    if (Services.Input.ReloadPressed)
+                        _currentWeapon.Reload(true);
                     break;
             }
         }
-        /// <summary>
-        /// Equip a new weapon by instantiating its prefab as a child.
-        /// </summary>
-        /// <param name="weaponPrefab">The weapon prefab (must have a WeaponCore component).</param>
-        public void Equip(GameObject weaponPrefab)
+
+        private void ToggleHolster()
         {
-            if (currentWeapon != null)
+            if (_currentWeapon == null) return;
+            _holstered = !_holstered;
+            if (_holstered)
+                _currentWeapon.Unequip();
+            else
+                _currentWeapon.Equip();
+        }
+
+        private void HandleEquipmentChanged(IEquipmentUser user)
+        {
+            var equipped = user.GetEquipped(EquipmentType.MainWeapon);
+            if (equipped != null)
+                EquipFromIEquippable(equipped);
+            else
+                UnequipCurrent();
+        }
+
+        private void EquipFromIEquippable(IEquippable equippable)
+        {
+            if (equippable.WorldPrefab == null)
             {
-                currentWeapon.Unequip();
-                Destroy(currentWeapon.gameObject);
-                Debug.Log("Weapon deleted!");
+                Debug.LogError("Equippable item has no world prefab.");
+                return;
             }
+            EquipWeaponPrefab(equippable.WorldPrefab);
+        }
 
-            GameObject go = Instantiate(weaponPrefab, HandR);
+        private void EquipWeaponPrefab(GameObject weaponPrefab)
+        {
+            if (_currentWeaponObject != null)
+                Destroy(_currentWeaponObject);
 
-            currentWeapon = go.GetComponent<WeaponCore>();
-            currentWeapon.owner = this.gameObject;
+            Transform attachPoint = _rightHand; // or determine by weapon type
+            _currentWeaponObject = Instantiate(weaponPrefab, attachPoint.position, attachPoint.rotation, attachPoint);
+            _currentWeapon = _currentWeaponObject.GetComponent<IWeapon>();
 
-            if (currentWeapon == null)
+            if (_currentWeapon == null)
             {
-                Debug.LogError($"Weapon prefab '{weaponPrefab.name}' has no WeaponCore component on its root! Destroying instantiated object.");
-                Destroy(go);
+                Debug.LogError($"Weapon prefab {weaponPrefab.name} does not have a component implementing IWeapon.");
+                Destroy(_currentWeaponObject);
                 return;
             }
 
-            //currentWeapon.Equip();
-                Debug.Log($"Weapon equipped!,{currentWeapon.inputType.ToString()}");
-        }
-        public void HolsterWeapon()
-        {
-            holstered = !holstered;
-            // holster animation is played.
-            //set bool holstered to true in the animator
-            currentWeapon.Unequip();
-             Destroy(currentWeapon.gameObject);
-             Debug.Log("Weapon holstered!");
-        }
+            // Determine weapon input type – you could read this from a property on IWeapon
+            // For now, assume it's based on a component or a tag; here we use a simple convention:
+            // If the weapon has a RangedWeapon component, treat as ranged; otherwise melee.
+            _currentWeaponType = _currentWeaponObject.GetComponent<RangedWeapon>() != null 
+                ? WeaponInputType.Ranged 
+                : WeaponInputType.Melee;
 
-       
-
-        void MeleInputMap()
-        {
-            if (inputs.actions[holster].triggered )
-            {
-                //Debug.Log("Equipping/holstering weapon.");
-                if (holstered) 
-                    currentWeapon.Equip(); // unholster if attack is pressed while holstered
-                else
-                    currentWeapon.Unequip(); // holster if attack is pressed while unholstered
-            }
-
-            if (holstered) return;
-
-            if (inputs.actions[attack].triggered)
-            {
-                currentWeapon.Attack();
-                
-            }
-            else if (inputs.actions[altAttack].triggered)
-            {
-                currentWeapon.AltAttack();
-            }
-
-            if (inputs.actions[block].IsPressed())
-             {
-                currentWeapon.Block();
-             }
-             else if (inputs.actions[block].WasReleasedThisFrame())
-             {
-                 currentWeapon.Block(false);
-            }
-            // Block action
-        }
-        void RangedInputMap()
-        {
-            if (inputs.actions[holster].triggered)
-            {
-                //Debug.Log("Equipping/holstering weapon.");
-                if (holstered)
-                {
-                    currentWeapon.Equip(); // unholster if attack is pressed while holstered
-                    holstered = false;
-                }
-                else
-                {
-                    currentWeapon.Unequip(); // holster if attack is pressed while unholstered
-                    holstered = true;
-                }
-            }
-
-            if (holstered) return;
-
-            if (inputs.actions[fire].triggered)
-            {
-                currentWeapon.Fire();
-
-            }
-            else if (inputs.actions[altFire].triggered)
-            {
-                currentWeapon.AltFire();
-            }
-
-            if (inputs.actions[reload].triggered)
-            {
-                currentWeapon.Reload();
-
-            }
-            if (inputs.actions[aim].IsPressed())
-            {
-                currentWeapon.Aim(true);
-            }
-            else if (inputs.actions[aim].WasReleasedThisFrame())
-            {
-                currentWeapon.Aim(false);
-            }
+            _currentWeapon.Owner = gameObject;
+            _currentWeapon.Equip();
+            _holstered = false;
         }
 
-
-        // Debuhg
-
-        [Button]
-        void Debug_EquipWeapon()
+        private void UnequipCurrent()
         {
-            Invoke(nameof(Debug_EquipW), 1f);
-        }
-        void Debug_EquipW()
-        {
-            Equip(Debug_StarterWeapon);
+            if (_currentWeapon != null)
+            {
+                _currentWeapon.Unequip();
+                Destroy(_currentWeaponObject);
+                _currentWeapon = null;
+                _currentWeaponObject = null;
+            }
         }
     }
-
-
-
 }

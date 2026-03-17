@@ -1,249 +1,144 @@
-using AniDrag.CharacterComponents;
-using AniDrag.Core;
 using System.Collections;
+using AniDrag.Core;
 using UnityEngine;
 
 namespace AniDrag.WeaponPack
 {
-    public class RangedWeapon : WeaponCore
+   public class RangedWeapon : WeaponCore
     {
-        [Header("========================\n" +
-                "    Projectile details      \n" +
-                "========================")]
-        [SerializeField] private GameObject projectilePrefab;
+        [Header("Animation")]
+        [SerializeField] private Animator weaponAnimator;
+        [SerializeField] private string fireTrigger = "Fire";
+        [SerializeField] private string aimBool = "Aiming";
+        [SerializeField] private string reloadTrigger = "Reload";
+
+        [Header("Firing Modes")]
+        public FireStrategy primaryFireStrategy;
+        public FireStrategy altFireStrategy;
+
+        [Header("General")]
+        public float fireRate = 0.2f;               // seconds between shots
+        public int projectilesPerShot = 1;
+        public float spreadAngle = 0f;
+        public LayerMask hitLayers;                  // for hitscan
+        public float raycastRange = 100f;            // for hitscan
+        public GameObject projectilePrefab;          // for physical projectiles
+
+        [Header("Damage")]
+        public int baseDamage = 10;                   // base damage, can be overridden by strategies
+
+        [Header("Ammo")]
+        public int magazineSize = 30;
+        public int maxAmmo = 90;
+        public bool infiniteAmmo = false;
+        public float reloadTime = 2f;
+
+        [Header("References")]
         [SerializeField] private Transform firePoint;
-        [Tooltip("Offset applied when instantiating projectile (e.g., to fix model misalignment)")]
-        [field: SerializeField] public Vector3 offsetOnInstatioation = Vector3.zero;
+        [SerializeField] private GameObject muzzleFlashPrefab;
+        [SerializeField] private AudioClip fireSound;
+        [SerializeField] private AudioClip reloadSound;
 
-        [Header("========================\n" +
-                "    Weapon Stats      \n" +
-                "========================")]
-        [SerializeField] private float projectileLaunchForce = 20f;
-        [SerializeField] private float fireChargeTime = 0f;
-        [SerializeField] private float fireRate = 5f;
-        [SerializeField] private float burstDelay = 0.1f;
-        [SerializeField, Range(1, 10)] private int projectilesPerShot = 1;
-        [SerializeField] private float spreadAngle = 2f;
-        [SerializeField] private int shotsPerMagazine = 30;
-        [SerializeField] private int magazineCapacity = 5;
-        [SerializeField] private float reloadTime = 2f;
-        [SerializeField] private bool infiniteAmmo = false;
+        // Public properties for strategies
+        public Transform FirePoint => firePoint;
+        public int CurrentAmmoInMag { get; private set; }
+        public int TotalRemainingAmmo { get; private set; }
+        public bool IsReloading { get; private set; }
 
-        // Optional: if assigned, used for player aiming
-        [Tooltip("If assigned, this camera's forward direction is used for aiming (for player). Otherwise uses owner's forward.")]
-        [SerializeField] private Camera playerCamera;
-
-        // For AI: we can set a target to aim at
-        private Entity currentTarget;  // if null, uses forward direction
-
-        // Private state
-        private int currentAmmoInMag;
-        private int totalRemainingAmmo;
-        private bool isCharging = false;
-        private float chargeStartTime;
-        private float nextFireTime;
-        private Coroutine reloadCoroutine;
-        private Coroutine fireCoroutine;
+        private float nextFireTime = 0f;
 
         private void Awake()
         {
-            inputType = WeaponInputType.Ranged;
-            InitializeAmmo();
+            CurrentAmmoInMag = magazineSize;
+            TotalRemainingAmmo = maxAmmo - magazineSize;
+            primaryFireStrategy?.Initialize(this);
+            altFireStrategy?.Initialize(this);
         }
 
-        private void InitializeAmmo()
+        #region IWeapon Implementation
+
+        public override void Attack(bool isPressed)
         {
-            currentAmmoInMag = shotsPerMagazine;
-            totalRemainingAmmo = shotsPerMagazine * (magazineCapacity - 1);
+            if (IsReloading) return;
+            primaryFireStrategy?.OnFire(this, isPressed);
         }
 
-        #region Public API for AI
-
-        /// <summary>
-        /// Set a target for the weapon to aim at. If null, weapon uses owner's forward direction.
-        /// </summary>
-        public void SetTarget(Entity target)
+        public override void AltAttack(bool isPressed)
         {
-            currentTarget = target;
+            if (IsReloading) return;
+            altFireStrategy?.OnAltFire(this, isPressed);
         }
 
-        /// <summary>
-        /// Convenience method for AI: sets target and fires.
-        /// </summary>
-        public void FireAtTarget(Entity target)
+        public override void Block(bool isPressed)
         {
-            SetTarget(target);
-            Fire(true);
-        }
-
-        #endregion
-
-        #region WeaponCore Overrides
-
-        public override void Fire(bool isPressed)
-        {
-            if (!isPressed)
-            {
-                if (isCharging)
-                {
-                    float chargeDuration = Time.time - chargeStartTime;
-                    if (chargeDuration >= fireChargeTime)
-                        AttemptFire();
-                    isCharging = false;
-                }
-                return;
-            }
-
-            if (fireChargeTime > 0f)
-            {
-                isCharging = true;
-                chargeStartTime = Time.time;
-            }
-            else
-            {
-                AttemptFire();
-            }
-        }
-
-        public override void AltFire(bool isPressed)
-        {
-            // Optional: alt-fire logic
-            Debug.Log("AltFire not implemented");
+            // Used for aiming
+            if (weaponAnimator != null)
+                weaponAnimator.SetBool(aimBool, isPressed);
         }
 
         public override void Reload(bool isPressed)
         {
-            if (!isPressed) return;
-            if (currentAmmoInMag >= shotsPerMagazine || totalRemainingAmmo <= 0) return;
-            if (reloadCoroutine != null) StopCoroutine(reloadCoroutine);
-            reloadCoroutine = StartCoroutine(ReloadCoroutine());
+            if (!isPressed || IsReloading) return;
+            if (CurrentAmmoInMag >= magazineSize || (!infiniteAmmo && TotalRemainingAmmo <= 0)) return;
+
+            StartCoroutine(ReloadRoutine());
         }
 
-        public override void Aim(bool isPressed)
+        public override void Equip()
         {
-            // Optional: aim down sights
+            base.Equip();
+            gameObject.SetActive(true);
         }
 
-        #endregion
-
-        #region Firing Logic
-
-        private void AttemptFire()
+        public override void Unequip()
         {
-            if (Time.time < nextFireTime) return;
-            if (currentAmmoInMag <= 0 && !infiniteAmmo)
-            {
-                Debug.Log("Out of ammo! Press reload.");
-                return;
-            }
-
-            if (!infiniteAmmo) currentAmmoInMag--;
-
-            if (fireCoroutine != null) StopCoroutine(fireCoroutine);
-            fireCoroutine = StartCoroutine(FireProjectiles());
-
-            nextFireTime = Time.time + (1f / fireRate);
-        }
-
-        private IEnumerator FireProjectiles()
-        {
-            for (int i = 0; i < projectilesPerShot; i++)
-            {
-                SpawnPhysicalProjectile();
-                if (i < projectilesPerShot - 1)
-                    yield return new WaitForSeconds(burstDelay);
-            }
-        }
-
-        private void SpawnPhysicalProjectile()
-        {
-            if (projectilePrefab == null || firePoint == null)
-            {
-                Debug.LogError("Physical projectile requires a prefab and firePoint!");
-                return;
-            }
-
-            // Determine aim direction
-            Vector3 aimDirection = GetAimDirection();
-
-            // Apply spread
-            Vector3 finalDirection = ApplySpread(aimDirection);
-
-            // Instantiate projectile
-            GameObject proj = Instantiate(projectilePrefab, firePoint.position + offsetOnInstatioation, Quaternion.LookRotation(finalDirection));
-            Rigidbody rb = proj.GetComponent<Rigidbody>();
-            if (rb != null)
-                rb.linearVelocity = finalDirection * projectileLaunchForce;
-
-            Projectile projectileScript = proj.GetComponent<Projectile>();
-            if (projectileScript != null)
-                projectileScript.Initialize(owner);
-        }
-
-        /// <summary>
-        /// Returns the direction to aim.
-        /// Priority: currentTarget (if set) → playerCamera (if assigned) → owner's forward.
-        /// Also applies eye‑height offset if shooting at a target.
-        /// </summary>
-        private Vector3 GetAimDirection()
-        {
-            // If we have a target, aim at its position (with optional height offset)
-            if (currentTarget != null)
-            {
-                // Use owner's eye position (height 1.6f) as requested
-                Vector3 eyePos = owner != null ? owner.transform.position + Vector3.up * 1.6f : firePoint.position;
-                Vector3 targetPos = currentTarget.transform.position + Vector3.up * 1.6f; // aim at eye level
-                return (targetPos - eyePos).normalized;
-            }
-
-            // Player aiming via camera
-            if (playerCamera != null)
-                return playerCamera.transform.forward;
-
-            // Fallback to owner's forward
-            if (owner != null)
-                return owner.transform.forward;
-
-            // Ultimate fallback
-            return firePoint.forward;
-        }
-
-        private Vector3 ApplySpread(Vector3 baseDirection)
-        {
-            if (projectilesPerShot <= 1 || spreadAngle <= 0)
-                return baseDirection;
-
-            float randomX = Random.Range(-spreadAngle, spreadAngle);
-            float randomY = Random.Range(-spreadAngle, spreadAngle);
-            Quaternion spreadRot = Quaternion.Euler(randomY, randomX, 0);
-            return spreadRot * baseDirection;
+            base.Unequip();
+            gameObject.SetActive(false);
         }
 
         #endregion
 
-        #region Reloading
-
-        private IEnumerator ReloadCoroutine()
+        private IEnumerator ReloadRoutine()
         {
-            // Play reload animation/sound here
+            IsReloading = true;
+            if (reloadSound != null && firePoint != null)
+                AudioSource.PlayClipAtPoint(reloadSound, firePoint.position);
+
+            if (weaponAnimator != null)
+                weaponAnimator.SetTrigger(reloadTrigger);
+
             yield return new WaitForSeconds(reloadTime);
 
-            int needed = shotsPerMagazine - currentAmmoInMag;
-            int available = Mathf.Min(needed, totalRemainingAmmo);
-            currentAmmoInMag += available;
-            totalRemainingAmmo -= available;
+            if (infiniteAmmo)
+            {
+                CurrentAmmoInMag = magazineSize;
+            }
+            else
+            {
+                int needed = magazineSize - CurrentAmmoInMag;
+                int taken = Mathf.Min(needed, TotalRemainingAmmo);
+                CurrentAmmoInMag += taken;
+                TotalRemainingAmmo -= taken;
+            }
 
-            Debug.Log($"Reloaded. Ammo: {currentAmmoInMag}/{totalRemainingAmmo + currentAmmoInMag}");
+            IsReloading = false;
         }
 
-        #endregion
+        // Helper methods for strategies
+        public bool CanFire()
+        {
+            return !IsReloading && Time.time >= nextFireTime && (infiniteAmmo || CurrentAmmoInMag > 0);
+        }
 
-        #region Ammo Helpers
+        public void ConsumeAmmo()
+        {
+            if (!infiniteAmmo)
+                CurrentAmmoInMag--;
+        }
 
-        public void AddAmmo(int amount) => totalRemainingAmmo += amount;
-        public int GetCurrentMagazineAmmo() => currentAmmoInMag;
-        public int GetTotalRemainingAmmo() => totalRemainingAmmo;
-
-        #endregion
+        public void SetNextFireTime(float delay)
+        {
+            nextFireTime = Time.time + delay;
+        }
     }
 }
